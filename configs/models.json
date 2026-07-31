@@ -1,0 +1,6 @@
+[
+  {
+    "label": "Base",
+    "model": "QuantTrio/gemma-4-31B-it-AWQ"
+  }
+]

@@ -1,0 +1,207 @@
+MINERAL_DEPOSIT_NO,DEPOSIT_NAME,MINERAL_CODE,MINERAL,MINERAL_TYPE,RELATIVE_ABUNDANCE_CODE,RELATIVE_ABUNDANCE_DESC,WEATHERING_PRODUCT,FORM_DISTRIBUTION
+2046,SHAMROCK,ACT,Actinolite,GANGUE,MAJOR,30- 70 % by volume,N,
+2046,SHAMROCK,AZ,Azurite,ORE,TRACE,1-4 % by volume,Y,
+2046,SHAMROCK,BT,Biotite,GANGUE,MINOR,5-29 % by volume,N,
+2046,SHAMROCK,IO,Iron oxide (non specific),GANGUE,TRACE,1-4 % by volume,Y,
+2046,SHAMROCK,MAL,Malachite,ORE,MINOR,5-29 % by volume,Y,As Aggregates; As Coating/film
+2046,SHAMROCK,MGT,Magnetite,GANGUE,MINOR,5-29 % by volume,N,
+2046,SHAMROCK,MTB,Metatorbernite,ORE,RARE,<1 % by volume,N,
+2046,SHAMROCK,PIT,Pitchblende,ORE,TRACE,1-4 % by volume,N,Granular
+2046,SHAMROCK,QZ,Quartz,GANGUE,MAJOR,30- 70 % by volume,N,
+2046,SHAMROCK,SCP,Scapolite,GANGUE,TRACE,1-4 % by volume,N,
+2046,SHAMROCK,TBR,Torbernite,ORE,RARE,<1 % by volume,N,
+2046,SHAMROCK,URN,Uraninite,ORE,RARE,<1 % by volume,N,
+2046,SHAMROCK,URP,Uranophane,ORE,RARE,<1 % by volume,N,
+2047,PINNACLES,BN,Bornite,ORE,RARE,<1 % by volume,N,
+2047,PINNACLES,CAL,Calcite,GANGUE,TRACE,1-4 % by volume,N,
+2047,PINNACLES,CCP,Chalcopyrite,ORE,TRACE,1-4 % by volume,N,
+2047,PINNACLES,CUP,Cuprite,ORE,TRACE,1-4 % by volume,Y,
+2047,PINNACLES,HEM,Hematite,GANGUE,TRACE,1-4 % by volume,N,
+2047,PINNACLES,MAL,Malachite,ORE,MINOR,5-29 % by volume,Y,
+2047,PINNACLES,PY,Pyrite,GANGUE,TRACE,1-4 % by volume,N,
+2047,PINNACLES,QZ,Quartz,GANGUE,MAJOR,30- 70 % by volume,N,
+2074,JUNCTION AND STANLEY,AZ,Azurite,ORE,MINOR,5-29 % by volume,Y,As Coating/film; Nodular
+2074,JUNCTION AND STANLEY,BMN,Bismuthinite,GANGUE,TRACE,1-4 % by volume,Y,
+2074,JUNCTION AND STANLEY,CAL,Calcite,GANGUE,MAJOR,30- 70 % by volume,N,
+2074,JUNCTION AND STANLEY,HEM,Hematite,GANGUE,TRACE,1-4 % by volume,N,
+2074,JUNCTION AND STANLEY,IO,Iron oxide (non specific),GANGUE,MAJOR,30- 70 % by volume,Y,
+2074,JUNCTION AND STANLEY,MAL,Malachite,ORE,MINOR,5-29 % by volume,Y,As Coating/film; Nodular
+2074,JUNCTION AND STANLEY,QZ,Quartz,GANGUE,MINOR,5-29 % by volume,N,
+2077,UMBERATANA,CARB,Carbonate,GANGUE,MINOR,5-29 % by volume,N,
+2077,UMBERATANA,MAL,Malachite,ORE,MINOR,5-29 % by volume,Y,
+2077,UMBERATANA,TREM,Tremolite,GANGUE,MAJOR,30- 70 % by volume,N,
+2085,WALLACE GULLY,AU,Gold,ORE,RARE,<1 % by volume,N,
+2085,WALLACE GULLY,AZ,Azurite,ORE,TRACE,1-4 % by volume,Y,
+2085,WALLACE GULLY,MAL,Malachite,ORE,TRACE,1-4 % by volume,Y,
+2085,WALLACE GULLY,QZ,Quartz,GANGUE,ABUNDANT,>70 % by volume,N,
+2086,WEALTHY KING,HEM,Hematite,GANGUE,TRACE,1-4 % by volume,N,Veinlets
+2086,WEALTHY KING,MAL,Malachite,ORE,MINOR,5-29 % by volume,Y,As Aggregates; As Coating/film
+2086,WEALTHY KING,QZ,Quartz,GANGUE,MAJOR,30- 70 % by volume,N,Veinlets
+2088,WHEAL AUSTIN,CC,Chalcocite,ORE,TRACE,1-4 % by volume,Y,
+2088,WHEAL AUSTIN,HEM,Hematite,GANGUE,TRACE,1-4 % by volume,N,
+2088,WHEAL AUSTIN,MAL,Malachite,ORE,MINOR,5-29 % by volume,Y,
+2088,WHEAL AUSTIN,MHEM,Hematite  Micaceous,GANGUE,TRACE,1-4 % by volume,N,
+2088,WHEAL AUSTIN,QZ,Quartz,GANGUE,ABUNDANT,>70 % by volume,N,
+2089,WHEAL FROST,AZ,Azurite,ORE,TRACE,1-4 % by volume,Y,
+2089,WHEAL FROST,HEM,Hematite,GANGUE,TRACE,1-4 % by volume,Y,
+2089,WHEAL FROST,MAL,Malachite,ORE,TRACE,1-4 % by volume,Y,
+2089,WHEAL FROST,MHEM,Hematite  Micaceous,GANGUE,RARE,<1 % by volume,N,
+2089,WHEAL FROST,QZ,Quartz,GANGUE,MAJOR,30- 70 % by volume,N,
+2090,WHEAL GLEESON SOUTH NO.2,CARB,Carbonate,ORE,,,U,
+2090,WHEAL GLEESON SOUTH NO.2,MAL,Malachite,ORE,,,U,
+2090,WHEAL GLEESON SOUTH NO.2,QZ,Quartz,GANGUE,,,U,As Aggregates; As Coating/film
+2091,WHEAL GLEESON,CCP,Chalcopyrite,ORE,TRACE,1-4 % by volume,N,
+2091,WHEAL GLEESON,CUP,Cuprite,ORE,TRACE,1-4 % by volume,Y,
+2091,WHEAL GLEESON,HEM,Hematite,GANGUE,TRACE,1-4 % by volume,N,
+2091,WHEAL GLEESON,MAL,Malachite,ORE,MAJOR,30- 70 % by volume,Y,As Aggregates; As Coating/film
+2091,WHEAL GLEESON,PY,Pyrite,GANGUE,TRACE,1-4 % by volume,N,
+2091,WHEAL GLEESON,QZ,Quartz,GANGUE,MAJOR,30- 70 % by volume,N,
+2091,WHEAL GLEESON,TNR,Tenorite,ORE,TRACE,1-4 % by volume,Y,
+2096,WILLIGAN,AZ,Azurite,ORE,TRACE,1-4 % by volume,Y,
+2096,WILLIGAN,CC,Chalcocite,ORE,TRACE,1-4 % by volume,N,
+2096,WILLIGAN,HEM,Hematite,GANGUE,TRACE,1-4 % by volume,N,
+2096,WILLIGAN,IO,Iron oxide (non specific),GANGUE,TRACE,1-4 % by volume,Y,
+2096,WILLIGAN,JAS,Jasper,GANGUE,RARE,<1 % by volume,N,
+2096,WILLIGAN,KAO,Kaolinite,GANGUE,TRACE,1-4 % by volume,Y,
+2096,WILLIGAN,MAL,Malachite,ORE,MINOR,5-29 % by volume,Y,
+2096,WILLIGAN,MGT,Magnetite,GANGUE,RARE,<1 % by volume,N,
+2096,WILLIGAN,QZ,Quartz,GANGUE,MAJOR,30- 70 % by volume,N,
+2103,YUDNAMUTANA,CC,Chalcocite,ORE,TRACE,1-4 % by volume,Y,
+2103,YUDNAMUTANA,CCP,Chalcopyrite,ORE,TRACE,1-4 % by volume,N,
+2103,YUDNAMUTANA,CUP,Cuprite,ORE,TRACE,1-4 % by volume,Y,
+2103,YUDNAMUTANA,HEM,Hematite,GANGUE,TRACE,1-4 % by volume,Y,
+2103,YUDNAMUTANA,MAL,Malachite,ORE,TRACE,1-4 % by volume,Y,
+2103,YUDNAMUTANA,QZ,Quartz,GANGUE,MAJOR,30- 70 % by volume,N,
+2103,YUDNAMUTANA,SD,Siderite,GANGUE,MINOR,5-29 % by volume,N,
+2104,SIR DOMINIC,AZ,Azurite,ORE,TRACE,1-4 % by volume,Y,
+2104,SIR DOMINIC,BMN,Bismuthinite,ORE,RARE,<1 % by volume,N,
+2104,SIR DOMINIC,CUP,Cuprite,ORE,RARE,<1 % by volume,Y,
+2104,SIR DOMINIC,KAO,Kaolinite,GANGUE,MINOR,5-29 % by volume,Y,
+2104,SIR DOMINIC,MAL,Malachite,ORE,TRACE,1-4 % by volume,Y,
+2104,SIR DOMINIC,QZ,Quartz,GANGUE,MAJOR,30- 70 % by volume,N,
+2105,DALY,APY,Arsenopyrite,ORE,TRACE,1-4 % by volume,N,Disseminated; Nodular; Stockwork
+2105,DALY,AZ,Azurite,ORE,MINOR,5-29 % by volume,Y,As Coating/film; Disseminated; Nodular; Stockwork
+2105,DALY,CCP,Chalcopyrite,ORE,TRACE,1-4 % by volume,N,Disseminated; Nodular; Stockwork
+2105,DALY,IO,Iron oxide (non specific),GANGUE,MINOR,5-29 % by volume,Y,
+2105,DALY,MAL,Malachite,ORE,MINOR,5-29 % by volume,Y,As Coating/film; Disseminated; Nodular; Stockwork
+2105,DALY,MAN,Manganese Oxide,GANGUE,TRACE,1-4 % by volume,Y,
+2105,DALY,PY,Pyrite,GANGUE,TRACE,1-4 % by volume,N,
+2105,DALY,QZ,Quartz,GANGUE,MAJOR,30- 70 % by volume,N,
+2106,OLD KNOLL,ATC,Atacamite,ORE,TRACE,1-4 % by volume,Y,
+2106,OLD KNOLL,AZ,Azurite,ORE,TRACE,1-4 % by volume,Y,As Aggregates; As Coating/film; Other
+2106,OLD KNOLL,CC,Chalcocite,ORE,TRACE,1-4 % by volume,Y,
+2106,OLD KNOLL,CCP,Chalcopyrite,ORE,TRACE,1-4 % by volume,N,
+2106,OLD KNOLL,CL,Chlorite,GANGUE,TRACE,1-4 % by volume,N,
+2106,OLD KNOLL,CUP,Cuprite,ORE,TRACE,1-4 % by volume,Y,
+2106,OLD KNOLL,IO,Iron oxide (non specific),GANGUE,MAJOR,30- 70 % by volume,Y,
+2106,OLD KNOLL,KAO,Kaolinite,GANGUE,MINOR,5-29 % by volume,Y,
+2106,OLD KNOLL,MAL,Malachite,ORE,MINOR,5-29 % by volume,Y,As Aggregates; As Coating/film; Disseminated; Other; Veinlets
+2106,OLD KNOLL,MHEM,Hematite  Micaceous,GANGUE,TRACE,1-4 % by volume,N,Veinlets
+2106,OLD KNOLL,PY,Pyrite,GANGUE,TRACE,1-4 % by volume,N,
+2106,OLD KNOLL,QZ,Quartz,GANGUE,MINOR,5-29 % by volume,N,Crystalline; Other; Veinlets
+2106,OLD KNOLL,SERC,Sericite,GANGUE,TRACE,1-4 % by volume,N,
+2106,OLD KNOLL,TOUR,Tourmaline,GANGUE,TRACE,1-4 % by volume,N,
+2107,JUBILEE,AU,Gold,ORE,RARE,<1 % by volume,N,
+2107,JUBILEE,AZ,Azurite,ORE,TRACE,1-4 % by volume,Y,As Aggregates; As Coating/film
+2107,JUBILEE,BI,Bismuth,GANGUE,RARE,<1 % by volume,N,
+2107,JUBILEE,HEM,Hematite,GANGUE,TRACE,1-4 % by volume,Y,
+2107,JUBILEE,LIM,Limonite,GANGUE,TRACE,1-4 % by volume,Y,
+2107,JUBILEE,MAL,Malachite,ORE,TRACE,1-4 % by volume,Y,As Aggregates; As Coating/film; Other
+2107,JUBILEE,QZ,Quartz,GANGUE,MAJOR,30- 70 % by volume,N,
+2114,BLACK QUEEN EAST,AZ,Azurite,ORE,,,Y,Banded/laminated; Disseminated
+2114,BLACK QUEEN EAST,CC,Chalcocite,ORE,,,U,Banded/laminated; Disseminated
+2114,BLACK QUEEN EAST,CCP,Chalcopyrite,ORE,,,U,
+2114,BLACK QUEEN EAST,CUP,Cuprite,ORE,,,Y,Banded/laminated; Disseminated
+2114,BLACK QUEEN EAST,HEM,Hematite,GANGUE,,,Y,
+2114,BLACK QUEEN EAST,LIM,Limonite,GANGUE,,,Y,
+2114,BLACK QUEEN EAST,MAL,Malachite,ORE,,,Y,As Aggregates; Banded/laminated; Disseminated
+2114,BLACK QUEEN EAST,QZ,Quartz,GANGUE,,,U,
+2115,BLACK QUEEN WEST,AZ,Azurite,ORE,,,Y,Banded/laminated; Disseminated
+2115,BLACK QUEEN WEST,CC,Chalcocite,ORE,,,Y,Banded/laminated; Disseminated
+2115,BLACK QUEEN WEST,CCP,Chalcopyrite,ORE,,,U,
+2115,BLACK QUEEN WEST,CUP,Cuprite,ORE,,,Y,Banded/laminated; Disseminated
+2115,BLACK QUEEN WEST,HEM,Hematite,GANGUE,,,U,
+2115,BLACK QUEEN WEST,MAL,Malachite,ORE,,,Y,As Aggregates; Banded/laminated; Disseminated
+2115,BLACK QUEEN WEST,QZ,Quartz,GANGUE,,,U,
+2116,BLUE,AZ,Azurite,ORE,TRACE,1-4 % by volume,Y,Disseminated
+2116,BLUE,CCP,Chalcopyrite,ORE,TRACE,1-4 % by volume,N,Disseminated
+2116,BLUE,CHC,Chalcanthite,ORE,TRACE,1-4 % by volume,N,
+2116,BLUE,HEM,Hematite,GANGUE,TRACE,1-4 % by volume,N,
+2116,BLUE,MAL,Malachite,ORE,MINOR,5-29 % by volume,Y,Disseminated
+2116,BLUE,MLT,Melanterite,ORE,TRACE,1-4 % by volume,N,
+2116,BLUE,PY,Pyrite,GANGUE,TRACE,1-4 % by volume,N,
+2116,BLUE,QZ,Quartz,GANGUE,MAJOR,30- 70 % by volume,N,
+2118,COCKSCOMB,AZ,Azurite,ORE,,,Y,Disseminated
+2118,COCKSCOMB,CUP,Cuprite,ORE,,,Y,Disseminated
+2118,COCKSCOMB,HEM,Hematite,GANGUE,,,U,
+2118,COCKSCOMB,JAS,Jasper,GANGUE,,,U,
+2118,COCKSCOMB,LIM,Limonite,GANGUE,,,U,
+2118,COCKSCOMB,MAL,Malachite,ORE,,,Y,Disseminated
+2118,COCKSCOMB,MAN,Manganese Oxide,GANGUE,,,U,
+2118,COCKSCOMB,MGT,Magnetite,GANGUE,,,U,
+2118,COCKSCOMB,PY,Pyrite,GANGUE,,,U,
+2118,COCKSCOMB,QZ,Quartz,GANGUE,,,U,
+2144,GRAND JUNCTION,BAR,Barite,GANGUE,MAJOR,30- 70 % by volume,N,
+2144,GRAND JUNCTION,CAL,Calcite,GANGUE,TRACE,1-4 % by volume,N,
+2144,GRAND JUNCTION,CCP,Chalcopyrite,ORE,TRACE,1-4 % by volume,N,As Aggregates
+2144,GRAND JUNCTION,CUP,Cuprite,ORE,TRACE,1-4 % by volume,Y,
+2144,GRAND JUNCTION,MAL,Malachite,ORE,MINOR,5-29 % by volume,Y,As Aggregates; Disseminated
+2144,GRAND JUNCTION,MHEM,Hematite  Micaceous,GANGUE,TRACE,1-4 % by volume,N,
+2144,GRAND JUNCTION,PY,Pyrite,ORE,TRACE,1-4 % by volume,N,As Aggregates
+2144,GRAND JUNCTION,QZ,Quartz,GANGUE,MINOR,5-29 % by volume,N,
+2144,GRAND JUNCTION,SD,Siderite,GANGUE,TRACE,1-4 % by volume,N,
+2151,HAMILTON,AGN,Argentite,ORE,RARE,<1 % by volume,N,
+2151,HAMILTON,AU,Gold,ORE,RARE,<1 % by volume,N,
+2151,HAMILTON,CC,Chalcocite,ORE,TRACE,1-4 % by volume,N,Nodular
+2151,HAMILTON,CCP,Chalcopyrite,ORE,TRACE,1-4 % by volume,N,
+2151,HAMILTON,CUP,Cuprite,ORE,TRACE,1-4 % by volume,Y,Nodular
+2151,HAMILTON,IO,Iron oxide (non specific),GANGUE,MINOR,5-29 % by volume,Y,
+2151,HAMILTON,MAL,Malachite,ORE,MINOR,5-29 % by volume,Y,Nodular
+2151,HAMILTON,QZ,Quartz,GANGUE,MAJOR,30- 70 % by volume,N,
+2151,HAMILTON,SD,Siderite,GANGUE,TRACE,1-4 % by volume,N,
+2160,MOUNT MCDONNELL,AGN,Argentite,ORE,RARE,<1 % by volume,N,
+2160,MOUNT MCDONNELL,AU,Gold,ORE,RARE,<1 % by volume,N,
+2160,MOUNT MCDONNELL,AZ,Azurite,ORE,TRACE,1-4 % by volume,Y,
+2160,MOUNT MCDONNELL,BI,Bismuth,ORE,RARE,<1 % by volume,Y,
+2160,MOUNT MCDONNELL,BMN,Bismuthinite,ORE,RARE,<1 % by volume,Y,
+2160,MOUNT MCDONNELL,BMT,Bismutite,ORE,RARE,<1 % by volume,Y,
+2160,MOUNT MCDONNELL,BN,Bornite,ORE,TRACE,1-4 % by volume,N,
+2160,MOUNT MCDONNELL,CAL,Calcite,GANGUE,MINOR,5-29 % by volume,N,Veinlets
+2160,MOUNT MCDONNELL,CCP,Chalcopyrite,ORE,TRACE,1-4 % by volume,N,
+2160,MOUNT MCDONNELL,HEM,Hematite,GANGUE,TRACE,1-4 % by volume,Y,
+2160,MOUNT MCDONNELL,LIM,Limonite,GANGUE,TRACE,1-4 % by volume,Y,
+2160,MOUNT MCDONNELL,MAL,Malachite,ORE,TRACE,1-4 % by volume,Y,As Aggregates; As Coating/film; Disseminated
+2160,MOUNT MCDONNELL,MHEM,Hematite  Micaceous,GANGUE,RARE,<1 % by volume,N,
+2160,MOUNT MCDONNELL,PY,Pyrite,GANGUE,TRACE,1-4 % by volume,N,
+2160,MOUNT MCDONNELL,QZ,Quartz,GANGUE,MINOR,5-29 % by volume,N,Veinlets
+2160,MOUNT MCDONNELL,SD,Siderite,GANGUE,MINOR,5-29 % by volume,N,Veinlets
+4157,BALANCING ROCK,CARB,Carbonate,GANGUE,MINOR,5-29 % by volume,N,
+4157,BALANCING ROCK,CCP,Chalcopyrite,ORE,TRACE,1-4 % by volume,N,
+4157,BALANCING ROCK,MAL,Malachite,ORE,TRACE,1-4 % by volume,Y,
+4157,BALANCING ROCK,QZ,Quartz,GANGUE,MAJOR,30- 70 % by volume,N,
+4166,BERNINIS,MAL,Malachite,ORE,TRACE,1-4 % by volume,Y,
+4166,BERNINIS,QZ,Quartz,GANGUE,MAJOR,30- 70 % by volume,N,
+4255,GREAT OVERSIGHT,MAL,Malachite,ORE,MINOR,5-29 % by volume,Y,
+4255,GREAT OVERSIGHT,QZ,Quartz,GANGUE,MAJOR,30- 70 % by volume,N,
+4307,MOLLER AND RANKINES,CCP,Chalcopyrite,ORE,TRACE,1-4 % by volume,N,
+4307,MOLLER AND RANKINES,CLAY,Clay mineral,GANGUE,ABUNDANT,>70 % by volume,Y,
+4307,MOLLER AND RANKINES,MAL,Malachite,ORE,MINOR,5-29 % by volume,Y,
+4307,MOLLER AND RANKINES,QZ,Quartz,GANGUE,MINOR,5-29 % by volume,N,
+4314,MOULES CLAIM,CC,Chalcocite,ORE,TRACE,1-4 % by volume,N,
+4314,MOULES CLAIM,CCP,Chalcopyrite,ORE,MINOR,5-29 % by volume,N,
+4314,MOULES CLAIM,CUP,Cuprite,ORE,TRACE,1-4 % by volume,Y,
+4314,MOULES CLAIM,MAL,Malachite,ORE,MINOR,5-29 % by volume,Y,
+4314,MOULES CLAIM,MGT,Magnetite,GANGUE,TRACE,1-4 % by volume,N,
+4314,MOULES CLAIM,MHEM,Hematite  Micaceous,GANGUE,ABUNDANT,>70 % by volume,N,
+4314,MOULES CLAIM,PY,Pyrite,GANGUE,MINOR,5-29 % by volume,N,
+4418,VALLEY,PIT,Pitchblende,ORE,TRACE,1-4 % by volume,Y,
+4418,VALLEY,QZ,Quartz,GANGUE,ABUNDANT,>70 % by volume,N,
+4418,VALLEY,URN,Uraninite,ORE,TRACE,1-4 % by volume,Y,
+4429,WHEAL MARIA,MAL,Malachite,ORE,MINOR,5-29 % by volume,Y,
+4429,WHEAL MARIA,QZ,Quartz,GANGUE,MAJOR,30- 70 % by volume,N,
+4444,YELDA,MAL,Malachite,ORE,MINOR,5-29 % by volume,Y,
+4444,YELDA,QZ,Quartz,GANGUE,ABUNDANT,>70 % by volume,N,
+9208,WHEAL GLEESON SOUTH 1,MAL,Malachite,ORE,MINOR,5-29 % by volume,Y,
+9223,WATERFALL CREEK,MAL,Malachite,ORE,MINOR,5-29 % by volume,Y,
+9223,WATERFALL CREEK,QZ,Quartz,GANGUE,ABUNDANT,>70 % by volume,N,
+9224,PINNACLES SOUTH,MAL,Malachite,ORE,MINOR,5-29 % by volume,Y,
