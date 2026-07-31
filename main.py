@@ -775,7 +775,7 @@ def validate_rubric(data: dict, path) -> None:
             f"[error] {path}: schema_version {version or 'missing'}, but this "
             f"build reads {RUBRIC_SCHEMA}. Regenerate the rubric under "
             f"{RUBRIC_SCHEMA} with the authoring skill "
-            "(.claude/skills/build-source-grounded-geology-benchmark)."
+            "(.claude/skills/build-source-grounded-groundtruth-benchmarking-geology)."
         )
     problems = []
     for q in data.get("questions") or []:

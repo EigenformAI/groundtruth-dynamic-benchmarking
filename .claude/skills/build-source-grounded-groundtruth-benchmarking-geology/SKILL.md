@@ -1,5 +1,5 @@
 ---
-name: build-source-grounded-geology-benchmark
+name: build-source-grounded-groundtruth-benchmarking-geology
 description: Use to create or revise a set of corpus-grounded geology benchmark questions, reference answers, (machine-readable) rubrics, and validation evidence
 ---
 

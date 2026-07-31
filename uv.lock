@@ -192,33 +192,6 @@ wheels = [
 ]
 
 [[package]]
-name = "geology-benchmark"
-version = "0.1.0"
-source = { virtual = "." }
-dependencies = [
-    { name = "google-auth" },
-    { name = "gspread" },
-    { name = "python-dotenv" },
-    { name = "requests" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "ruff" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "google-auth", specifier = ">=2.55.0" },
-    { name = "gspread", specifier = ">=6.2.1" },
-    { name = "python-dotenv", specifier = ">=1.2.2" },
-    { name = "requests", specifier = ">=2.34.2" },
-]
-
-[package.metadata.requires-dev]
-dev = [{ name = "ruff", specifier = ">=0.15.17" }]
-
-[[package]]
 name = "google-auth"
 version = "2.55.0"
 source = { registry = "https://pypi.org/simple" }
@@ -243,6 +216,33 @@ sdist = { url = "https://files.pythonhosted.org/packages/70/18/90c7fac516e63cf20
 wheels = [
     { url = "https://files.pythonhosted.org/packages/37/d3/d7dff0d58a9e9244b48044bfb6a898bfcc8ecc42e0031d1bebc695344725/google_auth_oauthlib-1.4.0-py3-none-any.whl", hash = "sha256:251314f213a9ee46a5ae73988e84fd7cca8bb68e7ecf4bfd45940f9e7f51d070", size = 19261, upload-time = "2026-05-07T08:02:13.798Z" },
 ]
+
+[[package]]
+name = "groundtruth-benchmarking-geology"
+version = "1.0.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "google-auth" },
+    { name = "gspread" },
+    { name = "python-dotenv" },
+    { name = "requests" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "google-auth", specifier = ">=2.55.0" },
+    { name = "gspread", specifier = ">=6.2.1" },
+    { name = "python-dotenv", specifier = ">=1.2.2" },
+    { name = "requests", specifier = ">=2.34.2" },
+]
+
+[package.metadata.requires-dev]
+dev = [{ name = "ruff", specifier = ">=0.15.17" }]
 
 [[package]]
 name = "gspread"

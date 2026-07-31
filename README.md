@@ -1,4 +1,4 @@
-# Geology Benchmark
+# Groundtruth Dynamic Benchmarking (Geology Edition)
 Benchmark harness for evaluating fine-tuned geology LLMs (LoRA adapters on Gemma) against a baseline on a fixed question set, using another LLM as judge. Questions and grading keys are authored from real geological source material; the rubric that ships with the repo is grounded in an openly licensed corpus for the Yudnamutana Copper district, South Australia.
 
 Evaluation is always a two-step process — there is no "compare while generating" mode:
@@ -58,7 +58,7 @@ Rubrics must be **schema 2.0** — the structured gate/component format defined 
 
 ### How the rubrics are built
 
-The rubric files are authored from a source corpus of geological reports using the agent skill in [`.claude/skills/build-source-grounded-geology-benchmark/`](.claude/skills/build-source-grounded-geology-benchmark/SKILL.md). It turns a supplied corpus into questions, reference answers, a machine-readable grading rubric (the gate/component scheme this benchmark scores against), and validation evidence. Open the repo in Claude Code and invoke `/build-source-grounded-geology-benchmark` to author a new rubric.
+The rubric files are authored from a source corpus of geological reports using the agent skill in [`.claude/skills/build-source-grounded-groundtruth-benchmarking-geology/`](.claude/skills/build-source-grounded-groundtruth-benchmarking-geology/SKILL.md). It turns a supplied corpus into questions, reference answers, a machine-readable grading rubric (the gate/component scheme this benchmark scores against), and validation evidence. Open the repo in Claude Code and invoke `/build-source-grounded-groundtruth-benchmarking-geology` to author a new rubric.
 
 ## Models
 
@@ -68,7 +68,7 @@ The model menu in `start_eval.sh` is defined in [`configs/models.json`](configs/
 
 Each question is judged **twice** — once as (A, B) and once order-swapped as (B, A) — and the verdicts are averaged. This corrects for position bias: LLM judges tend to favor whichever answer they see first. If both orderings agree the verdict is confident; if they disagree it nets toward a tie. See the docstring on `compare_answers()` in `main.py` for the scoring math.
 
-Every answer additionally gets an independent 0–10 score (`score_answer()`) against the rubric's gate/component criteria, separate from the pairwise verdict. The judge reports this as structured JSON following the grader output contract in the [authoring skill](.claude/skills/build-source-grounded-geology-benchmark/SKILL.md): the gate decision, per-component `awarded`/`maximum` with reasons, and an adjudication flag for answers it cannot verify from the rubric alone. `main.py` validates the contract — component awards must sum to the total, and a failed gate zeroes everything — and re-asks the judge when the JSON breaks it. The per-component breakdown is saved next to the total in the score file. A cost estimate for the judge calls is printed before the run starts, and the actual spend is reported at the end.
+Every answer additionally gets an independent 0–10 score (`score_answer()`) against the rubric's gate/component criteria, separate from the pairwise verdict. The judge reports this as structured JSON following the grader output contract in the [authoring skill](.claude/skills/build-source-grounded-groundtruth-benchmarking-geology/SKILL.md): the gate decision, per-component `awarded`/`maximum` with reasons, and an adjudication flag for answers it cannot verify from the rubric alone. `main.py` validates the contract — component awards must sum to the total, and a failed gate zeroes everything — and re-asks the judge when the JSON breaks it. The per-component breakdown is saved next to the total in the score file. A cost estimate for the judge calls is printed before the run starts, and the actual spend is reported at the end.
 
 ## Outputs
 

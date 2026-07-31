@@ -3,7 +3,7 @@
 **Corpus:** `corpus/yudnamutana/` — 34 mineral deposit records from the Yudnamutana Copper district, extracted from the SA Geodata / SARIG Data Package published by the Geological Survey of South Australia. CC BY 4.0 AU; see `corpus/yudnamutana/ATTRIBUTION.md` for the required attribution and the exact extraction.
 **Scope:** Grading scheme for the 3 Yudnamutana sample items. Each question gives the prompt, model answer, mandatory gate with fail examples, scored components totalling 10, required concepts, and do-not-credit guidance. Per-claim evidence locators and calibration fixtures live in the sidecar (`Yudnamutana_QA_grading_key.json`), which is the authoring source of truth.
 
-> **Three questions only.** This is a format demonstration and an end-to-end smoke test, not a full benchmark. Author a real one with the `build-source-grounded-geology-benchmark` skill in `.claude/skills/`.
+> **Three questions only.** This is a format demonstration and an end-to-end smoke test, not a full benchmark. Author a real one with the `build-source-grounded-groundtruth-benchmarking-geology` skill in `.claude/skills/`.
 
 **Candidate access mode:** `OPEN_CORPUS` — the candidate may read the four CSVs while answering.
 

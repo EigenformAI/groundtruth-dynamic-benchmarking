@@ -1,7 +1,7 @@
 [project]
-name = "geology-benchmark"
-version = "0.1.0"
-description = "Benchmark harness for evaluating fine-tuned geology LLMs against a baseline using an LLM judge"
+name = "groundtruth-benchmarking-geology"
+version = "1.0.0"
+description = "Groundtruth Dynamic Benchmarking (Geology Edition) — benchmark harness for evaluating fine-tuned geology LLMs against a baseline using an LLM judge"
 readme = "README.md"
 license = "MIT"
 authors = [{ name = "Eigenform AI" }]
