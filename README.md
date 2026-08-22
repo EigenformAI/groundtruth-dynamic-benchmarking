@@ -82,11 +82,13 @@ Re-running with the same `--output` file **resumes**: completed question ids are
 
 ## On Hugging Face
 
-The rubric, corpus, and grading keys are also published as a
-[Hugging Face dataset](https://huggingface.co/datasets/EigenformAI/groundtruth-dynamic-benchmarking),
-loadable directly with `datasets.load_dataset("EigenformAI/groundtruth-dynamic-benchmarking", "yudnamutana")`.
-Community results (run this harness yourself, then submit your `scores.json`)
-show up on the [leaderboard](https://eigenformai.github.io/groundtruth-dynamic-benchmarking/leaderboard/) —
+The rubrics, corpora, and grading keys are also published as a
+[Hugging Face dataset](https://huggingface.co/datasets/EigenformAI/groundtruth-dynamic-benchmarking)
+with one config per rubric — `yudnamutana` (3-question sample), plus three
+50-question suites: `coe`, `supergene`, `technical`. Load any of them with
+`datasets.load_dataset("EigenformAI/groundtruth-dynamic-benchmarking", "<key>")`.
+Baseline results across six frontier models, plus community submissions, show
+up on the [leaderboard](https://eigenformai.github.io/groundtruth-dynamic-benchmarking/leaderboard/) —
 submission instructions are in the
 [submissions dataset README](https://huggingface.co/datasets/EigenformAI/groundtruth-dynamic-benchmarking-submissions).
 

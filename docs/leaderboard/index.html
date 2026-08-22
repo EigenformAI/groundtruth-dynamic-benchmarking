@@ -13,9 +13,8 @@
     --row-alt: #f7f7f8;
     --accent: #8a5a2b;
     --accent-bg: #fbf1e6;
-    --win: #1a7f37;
-    --loss: #c53030;
-    --tie: #6b6b6b;
+    --good: #1a7f37;
+    --bad: #c53030;
     --warn-bg: #fff8e5;
     --warn-fg: #8a6100;
     --link: #8a5a2b;
@@ -30,58 +29,43 @@
       --row-alt: #1b1815;
       --accent: #d79a5c;
       --accent-bg: #2a2118;
-      --win: #4ada79;
-      --loss: #ff6b6b;
-      --tie: #a89f91;
+      --good: #4ada79;
+      --bad: #ff6b6b;
       --warn-bg: #2e2410;
       --warn-fg: #e0b64d;
       --link: #d79a5c;
     }
   }
   * { box-sizing: border-box; }
-  body {
-    background: var(--bg);
-    color: var(--fg);
-    margin: 0;
-    padding: 2.5rem 1.5rem 4rem;
-  }
-  main { max-width: 980px; margin: 0 auto; }
+  body { background: var(--bg); color: var(--fg); margin: 0; padding: 2.5rem 1.5rem 4rem; }
+  main { max-width: 1080px; margin: 0 auto; }
   h1 { font-size: 1.7rem; margin: 0 0 0.3rem; }
-  p.lede { color: var(--muted); max-width: 62ch; line-height: 1.5; }
+  p.lede { color: var(--muted); max-width: 68ch; line-height: 1.5; }
   a { color: var(--link); }
-  .links { margin: 1.2rem 0 2rem; display: flex; gap: 1.2rem; flex-wrap: wrap; font-size: 0.92rem; }
+  .links { margin: 1.2rem 0 1.5rem; display: flex; gap: 1.2rem; flex-wrap: wrap; font-size: 0.92rem; }
+  .controls { display: flex; align-items: center; gap: 0.6rem; margin: 1rem 0 1rem; font-size: 0.9rem; }
+  select {
+    background: var(--row-alt); color: var(--fg); border: 1px solid var(--border);
+    border-radius: 6px; padding: 0.3rem 0.5rem; font-size: 0.9rem;
+  }
   .status { color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem; }
   table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
   thead th {
-    text-align: left;
-    padding: 0.6rem 0.7rem;
-    border-bottom: 2px solid var(--border);
-    color: var(--muted);
-    font-weight: 600;
-    white-space: nowrap;
+    text-align: left; padding: 0.6rem 0.7rem; border-bottom: 2px solid var(--border);
+    color: var(--muted); font-weight: 600; white-space: nowrap;
   }
   tbody td { padding: 0.6rem 0.7rem; border-bottom: 1px solid var(--border); vertical-align: top; }
   tbody tr:nth-child(even) { background: var(--row-alt); }
   td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
   .model { font-weight: 600; }
-  .sub { color: var(--muted); font-size: 0.85rem; }
-  .badge {
-    display: inline-block;
-    padding: 0.1rem 0.5rem;
-    border-radius: 999px;
-    font-size: 0.78rem;
-    font-weight: 600;
+  .rubric-tag {
+    display: inline-block; font-size: 0.75rem; font-weight: 600; padding: 0.05rem 0.45rem;
+    border-radius: 999px; background: var(--accent-bg); color: var(--accent);
   }
-  .badge.win { background: color-mix(in srgb, var(--win) 18%, transparent); color: var(--win); }
-  .badge.loss { background: color-mix(in srgb, var(--loss) 18%, transparent); color: var(--loss); }
-  .badge.tie { background: color-mix(in srgb, var(--tie) 18%, transparent); color: var(--tie); }
+  .score { font-weight: 700; font-variant-numeric: tabular-nums; }
   .warn {
-    background: var(--warn-bg);
-    color: var(--warn-fg);
-    border-radius: 8px;
-    padding: 0.5rem 0.7rem;
-    font-size: 0.8rem;
-    margin-top: 0.3rem;
+    background: var(--warn-bg); color: var(--warn-fg); border-radius: 8px;
+    padding: 0.5rem 0.7rem; font-size: 0.8rem; margin-top: 0.3rem;
   }
   .empty, .error { color: var(--muted); padding: 2rem 0; }
   footer { margin-top: 3rem; color: var(--muted); font-size: 0.82rem; line-height: 1.6; }
@@ -92,14 +76,19 @@
 <main>
   <h1>Groundtruth Geology Benchmark — Leaderboard</h1>
   <p class="lede">
-    Self-reported results against the
+    Self-reported pointwise rubric scores (0–10 per question) against the
     <a href="https://huggingface.co/datasets/EigenformAI/groundtruth-dynamic-benchmarking">groundtruth-dynamic-benchmarking</a>
-    geology rubric. Every row here is read live from a public dataset — nothing is hardcoded on this page.
+    geology rubrics. Every row here is read live from a public dataset — nothing is hardcoded on this page.
   </p>
   <div class="links">
     <a href="https://huggingface.co/datasets/EigenformAI/groundtruth-dynamic-benchmarking">Benchmark dataset ↗</a>
     <a href="https://github.com/EigenformAI/groundtruth-dynamic-benchmarking">Eval harness (GitHub) ↗</a>
     <a href="https://huggingface.co/datasets/EigenformAI/groundtruth-dynamic-benchmarking-submissions">Submit a result ↗</a>
+  </div>
+
+  <div class="controls">
+    <label for="rubric-filter">Rubric:</label>
+    <select id="rubric-filter"><option value="__all__">All</option></select>
   </div>
 
   <div id="status" class="status">Loading…</div>
@@ -108,14 +97,15 @@
   <footer>
     <p>
       <strong>Results are self-reported, not independently re-run.</strong>
-      Each row is exactly what a submitter's own <code>main.py --score</code> run
-      produced; nothing here is re-verified server-side. Use the "source" link
-      on each row and the linked model repo to check reproducibility yourself.
+      Each row is exactly what a submitter's own scoring run produced;
+      nothing here is re-verified server-side. Use the "source" link on each
+      row and the linked model repo to check reproducibility yourself.
     </p>
     <p>
-      Rubric currently: <code>yudnamutana</code> (3 questions, sample/smoke-test scale — see the
-      <a href="https://huggingface.co/datasets/EigenformAI/groundtruth-dynamic-benchmarking">dataset card</a>
-      for status). Rows whose question ids don't match the currently published rubric are flagged, not hidden.
+      This is a pointwise leaderboard: each row is one model's average score
+      against one rubric, not a head-to-head comparison. Rows whose question
+      ids don't match the rubric named in their own <code>meta.json</code>
+      are flagged, not hidden.
     </p>
   </footer>
 </main>
@@ -128,6 +118,9 @@ const SUBMISSIONS_REPO = "EigenformAI/groundtruth-dynamic-benchmarking-submissio
 
 const statusEl = document.getElementById("status");
 const containerEl = document.getElementById("table-container");
+const filterEl = document.getElementById("rubric-filter");
+
+let ALL_ROWS = [];
 
 function setStatus(msg) { statusEl.textContent = msg; }
 
@@ -136,15 +129,19 @@ async function fetchJson(url) {
   if (!res.ok) throw new Error(`${res.status} fetching ${url}`);
   return res.json();
 }
-
 async function fetchText(url) {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`${res.status} fetching ${url}`);
   return res.text();
 }
 
-async function loadRubricQuestionIds() {
-  const jsonl = await fetchText(`${DATASET_RESOLVE}/${RUBRIC_REPO}/resolve/main/data/yudnamutana/questions.jsonl`);
+async function loadRubricRegistry() {
+  // rubrics.json at the dataset repo root: [{key, label, questions_file, ...}, ...]
+  return fetchJson(`${DATASET_RESOLVE}/${RUBRIC_REPO}/resolve/main/rubrics.json`);
+}
+
+async function loadRubricQuestionIds(questionsFile) {
+  const jsonl = await fetchText(`${DATASET_RESOLVE}/${RUBRIC_REPO}/resolve/main/${questionsFile}`);
   const ids = new Set();
   for (const line of jsonl.split("\n")) {
     const trimmed = line.trim();
@@ -156,82 +153,85 @@ async function loadRubricQuestionIds() {
 
 async function listSubmissionSlugs() {
   const entries = await fetchJson(`${DATASET_API}/${SUBMISSIONS_REPO}/tree/main/submissions`);
-  const slugs = new Set();
+  const slugs = [];
   for (const e of entries) {
     const parts = e.path.split("/");
-    if (parts.length >= 2 && parts[0] === "submissions" && parts[1] !== "_template") {
-      slugs.add(parts[1]);
+    if (e.type === "directory" && parts.length === 2 && parts[0] === "submissions" && parts[1] !== "_template") {
+      slugs.push(parts[1]);
     }
   }
-  return [...slugs];
+  return slugs;
 }
 
-function verdictSide(entry, candidateSide) {
-  // candidateSide "a" or "b": which side of the verdict string is the submitted model.
-  const v = entry.verdict;
-  if (!v || v === "unknown") return "unknown";
-  const candWinsAsA = v === "A>>B" || v === "A>B";
-  const candWinsAsB = v === "B>>A" || v === "B>A";
-  const tie = v === "A=B";
-  if (tie) return "tie";
-  if (candidateSide === "a") return candWinsAsA ? "win" : (candWinsAsB ? "loss" : "unknown");
-  return candWinsAsB ? "win" : (candWinsAsA ? "loss" : "unknown");
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
-async function loadSubmission(slug, rubricIds) {
+async function loadSubmission(slug, rubricsByKey) {
   const base = `${DATASET_RESOLVE}/${SUBMISSIONS_REPO}/resolve/main/submissions/${slug}`;
   const meta = await fetchJson(`${base}/meta.json`);
   const scores = await fetchJson(`${base}/scores.json`);
 
-  const side = (meta.candidate_side || "").toLowerCase();
+  const rubricKey = meta.rubric_key;
   const warnings = [];
-  if (side !== "a" && side !== "b") {
-    warnings.push("meta.json candidate_side is missing/invalid (must be 'a' or 'b') — skipped from ranking.");
+  const rubricInfo = rubricsByKey[rubricKey];
+  if (!rubricInfo) {
+    warnings.push(`meta.json rubric_key "${escapeHtml(rubricKey || "")}" doesn't match any published rubric config — skipped from ranking.`);
     return { slug, meta, warnings, skip: true };
   }
 
-  let win = 0, loss = 0, tie = 0, unknown = 0;
-  let scoreSum = 0, scoreN = 0, adjFlags = 0;
-  let matchedIds = 0;
-
+  let scoreSum = 0, scoreN = 0, gatePassN = 0, gateTotalN = 0, adjFlags = 0, matchedIds = 0;
   for (const entry of scores) {
     if (!entry || typeof entry !== "object" || !("id" in entry)) continue;
-    if (rubricIds.has(String(entry.id))) matchedIds++;
+    if (rubricInfo.ids.has(String(entry.id))) matchedIds++;
 
-    const outcome = verdictSide(entry, side);
-    if (outcome === "win") win++;
-    else if (outcome === "loss") loss++;
-    else if (outcome === "tie") tie++;
-    else unknown++;
-
-    const candScore = side === "a" ? entry.score_a : entry.score_b;
-    if (typeof candScore === "number") { scoreSum += candScore; scoreN++; }
-
-    const candAdj = side === "a" ? entry.score_a_adjudication_required : entry.score_b_adjudication_required;
-    if (candAdj) adjFlags++;
+    if (typeof entry.score_b === "number") { scoreSum += entry.score_b; scoreN++; }
+    if (typeof entry.score_b_gate_passed === "boolean") {
+      gateTotalN++;
+      if (entry.score_b_gate_passed) gatePassN++;
+    }
+    if (entry.score_b_adjudication_required) adjFlags++;
   }
 
   if (scores.length > 0 && matchedIds === 0) {
-    warnings.push("No question ids in this submission match the currently published rubric — likely a stale or different rubric run.");
+    warnings.push("No question ids in this submission match the rubric named in meta.json — likely a stale or different rubric run.");
   } else if (scores.length > 0 && matchedIds < scores.length) {
-    warnings.push(`${scores.length - matchedIds} of ${scores.length} question ids don't match the current rubric.`);
+    warnings.push(`${scores.length - matchedIds} of ${scores.length} question ids don't match the "${escapeHtml(rubricKey)}" rubric.`);
   }
   if (scores.length === 0) warnings.push("scores.json is empty.");
 
   return {
     slug, meta, warnings, skip: false,
-    n: scores.length, win, loss, tie, unknown,
+    rubricKey, rubricLabel: rubricInfo.label,
+    n: scores.length,
     avgScore: scoreN ? scoreSum / scoreN : null,
+    gatePassRate: gateTotalN ? gatePassN / gateTotalN : null,
     adjFlags,
   };
 }
 
-function badge(kind, label) {
-  return `<span class="badge ${kind}">${label}</span>`;
-}
+function rowHtml(r) {
+  const m = r.meta || {};
+  const scoreCell = r.skip || r.avgScore === null ? "—" : `<span class="score">${r.avgScore.toFixed(2)}</span>`;
+  const gateCell = r.skip || r.gatePassRate === null ? "—" : `${Math.round(r.gatePassRate * 100)}%`;
+  const rubricCell = r.skip ? "—" : `<span class="rubric-tag">${escapeHtml(r.rubricLabel || r.rubricKey)}</span>`;
+  const warnHtml = (r.warnings || []).map(w => `<div class="warn">${escapeHtml(w)}</div>`).join("");
+  const modelName = escapeHtml(m.model_name || r.slug);
+  const modelId = m.candidate_model_id ? `<div class="sub" style="color:var(--muted);font-size:0.82rem">${escapeHtml(m.candidate_model_id)}</div>` : "";
+  const contactLink = m.contact_or_repo
+    ? `<a href="${escapeHtml(m.contact_or_repo)}">${escapeHtml(m.submitter || m.contact_or_repo)}</a>` : escapeHtml(m.submitter || "—");
+  const sourceLink = `${DATASET_RESOLVE}/${SUBMISSIONS_REPO}/blob/main/submissions/${r.slug}/scores.json`;
 
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  return `<tr data-rubric="${escapeHtml(r.rubricKey || "")}">
+    <td><div class="model">${modelName}</div>${modelId}${warnHtml}</td>
+    <td>${rubricCell}</td>
+    <td class="num">${scoreCell}</td>
+    <td class="num">${gateCell}</td>
+    <td class="num">${r.skip ? "—" : r.adjFlags}</td>
+    <td>${escapeHtml(m.date || "—")}</td>
+    <td>${contactLink}</td>
+    <td><a href="${sourceLink}">raw ↗</a></td>
+  </tr>`;
 }
 
 function renderTable(rows) {
@@ -239,45 +239,44 @@ function renderTable(rows) {
     containerEl.innerHTML = `<p class="empty">No submissions yet. Be the first — see the "Submit a result" link above.</p>`;
     return;
   }
-  rows.sort((a, b) => (b.avgScore ?? -1) - (a.avgScore ?? -1));
-
-  const body = rows.map(r => {
-    const m = r.meta || {};
-    const scoreCell = r.skip || r.avgScore === null ? "—" : r.avgScore.toFixed(2);
-    const resultCell = r.skip ? "—" :
-      `${badge("win", r.win + "W")} ${badge("tie", r.tie + "T")} ${badge("loss", r.loss + "L")}`;
-    const warnHtml = (r.warnings || []).map(w => `<div class="warn">${escapeHtml(w)}</div>`).join("");
-    const modelName = escapeHtml(m.model_name || r.slug);
-    const contactLink = m.contact_or_repo
-      ? `<a href="${escapeHtml(m.contact_or_repo)}">${escapeHtml(m.contact_or_repo)}</a>` : "—";
-    const sourceLink = `${DATASET_RESOLVE}/${SUBMISSIONS_REPO}/blob/main/submissions/${r.slug}/scores.json`;
-
-    return `<tr>
-      <td><div class="model">${modelName}</div><div class="sub">${escapeHtml(m.baseline_label ? "vs " + m.baseline_label : "")}</div>${warnHtml}</td>
-      <td>${escapeHtml(m.submitter || "—")}</td>
-      <td>${resultCell}</td>
-      <td class="num">${scoreCell}</td>
-      <td class="num">${r.skip ? "—" : r.adjFlags}</td>
-      <td>${escapeHtml(m.date || "—")}</td>
-      <td>${contactLink}</td>
-      <td><a href="${sourceLink}">raw ↗</a></td>
-    </tr>`;
-  }).join("");
+  const sorted = [...rows].sort((a, b) => {
+    const rk = (a.rubricKey || "").localeCompare(b.rubricKey || "");
+    if (rk !== 0) return rk;
+    return (b.avgScore ?? -1) - (a.avgScore ?? -1);
+  });
 
   containerEl.innerHTML = `<table>
     <thead><tr>
-      <th>Model</th><th>Submitter</th><th>vs baseline</th>
-      <th class="num">Avg score /10</th><th class="num">Adj. flags</th>
-      <th>Date</th><th>Model / contact</th><th>Source</th>
+      <th>Model</th><th>Rubric</th>
+      <th class="num">Avg score /10</th><th class="num">Gate pass</th><th class="num">Adj. flags</th>
+      <th>Submitted</th><th>By</th><th>Source</th>
     </tr></thead>
-    <tbody>${body}</tbody>
+    <tbody>${sorted.map(rowHtml).join("")}</tbody>
   </table>`;
+}
+
+function applyFilter() {
+  const val = filterEl.value;
+  const rows = val === "__all__" ? ALL_ROWS : ALL_ROWS.filter(r => r.rubricKey === val);
+  renderTable(rows);
 }
 
 async function main() {
   try {
-    setStatus("Loading rubric…");
-    const rubricIds = await loadRubricQuestionIds();
+    setStatus("Loading rubric registry…");
+    const registry = await loadRubricRegistry();
+
+    setStatus(`Loading ${registry.length} rubric question set(s)…`);
+    const rubricsByKey = {};
+    for (const r of registry) {
+      const ids = await loadRubricQuestionIds(r.questions_file);
+      rubricsByKey[r.key] = { label: r.label || r.key, ids };
+      const opt = document.createElement("option");
+      opt.value = r.key;
+      opt.textContent = r.label || r.key;
+      filterEl.appendChild(opt);
+    }
+    filterEl.addEventListener("change", applyFilter);
 
     setStatus("Listing submissions…");
     const slugs = await listSubmissionSlugs();
@@ -286,13 +285,14 @@ async function main() {
     const rows = [];
     for (const slug of slugs) {
       try {
-        rows.push(await loadSubmission(slug, rubricIds));
+        rows.push(await loadSubmission(slug, rubricsByKey));
       } catch (e) {
         rows.push({ slug, meta: { model_name: slug }, warnings: [`Failed to load: ${e.message}`], skip: true });
       }
     }
 
-    setStatus(`${rows.length} submission(s) · updated ${new Date().toISOString().slice(0, 16).replace("T", " ")} UTC`);
+    ALL_ROWS = rows;
+    setStatus(`${rows.length} submission(s) across ${registry.length} rubric(s) · updated ${new Date().toISOString().slice(0, 16).replace("T", " ")} UTC`);
     renderTable(rows);
   } catch (e) {
     setStatus("");
