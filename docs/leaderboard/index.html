@@ -18,6 +18,7 @@
     --warn-bg: #fff8e5;
     --warn-fg: #8a6100;
     --link: #8a5a2b;
+    --banner-bg: #f2ecdf;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
   }
   @media (prefers-color-scheme: dark) {
@@ -34,6 +35,7 @@
       --warn-bg: #2e2410;
       --warn-fg: #e0b64d;
       --link: #d79a5c;
+      --banner-bg: #241e14;
     }
   }
   * { box-sizing: border-box; }
@@ -43,10 +45,22 @@
   p.lede { color: var(--muted); max-width: 68ch; line-height: 1.5; }
   a { color: var(--link); }
   .links { margin: 1.2rem 0 1.5rem; display: flex; gap: 1.2rem; flex-wrap: wrap; font-size: 0.92rem; }
-  .controls { display: flex; align-items: center; gap: 0.6rem; margin: 1rem 0 1rem; font-size: 0.9rem; }
+  .controls { display: flex; align-items: center; gap: 1.4rem; margin: 1rem 0 1rem; font-size: 0.9rem; flex-wrap: wrap; }
+  .control-group { display: flex; align-items: center; gap: 0.6rem; }
   select {
     background: var(--row-alt); color: var(--fg); border: 1px solid var(--border);
     border-radius: 6px; padding: 0.3rem 0.5rem; font-size: 0.9rem;
+  }
+  .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 7px; overflow: hidden; }
+  .seg button {
+    background: var(--row-alt); color: var(--fg); border: none; padding: 0.35rem 0.8rem;
+    font-size: 0.9rem; cursor: pointer; font-family: inherit;
+  }
+  .seg button + button { border-left: 1px solid var(--border); }
+  .seg button.active { background: var(--accent); color: var(--bg); font-weight: 600; }
+  .banner {
+    background: var(--banner-bg); border-radius: 8px; padding: 0.7rem 1rem;
+    margin: 0 0 1rem; font-size: 0.87rem; line-height: 1.5;
   }
   .status { color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem; }
   table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
@@ -57,11 +71,13 @@
   tbody td { padding: 0.6rem 0.7rem; border-bottom: 1px solid var(--border); vertical-align: top; }
   tbody tr:nth-child(even) { background: var(--row-alt); }
   td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
-  .model { font-weight: 600; }
-  .rubric-tag {
+  .primary { font-weight: 600; }
+  .sub { color: var(--muted); font-size: 0.82rem; }
+  .rubric-tag, .harness-tag {
     display: inline-block; font-size: 0.75rem; font-weight: 600; padding: 0.05rem 0.45rem;
     border-radius: 999px; background: var(--accent-bg); color: var(--accent);
   }
+  .harness-tag.none { background: transparent; color: var(--muted); font-weight: 500; padding-left: 0; }
   .score { font-weight: 700; font-variant-numeric: tabular-nums; }
   .warn {
     background: var(--warn-bg); color: var(--warn-fg); border-radius: 8px;
@@ -78,7 +94,7 @@
   <p class="lede">
     Self-reported pointwise rubric scores (0–10 per question) against the
     <a href="https://huggingface.co/datasets/EigenformAI/groundtruth-dynamic-benchmarking">groundtruth-dynamic-benchmarking</a>
-    geology rubrics. Every row here is read live from a public dataset — nothing is hardcoded on this page.
+    geology rubrics. Every row here is read live from public datasets — nothing is hardcoded on this page.
   </p>
   <div class="links">
     <a href="https://huggingface.co/datasets/EigenformAI/groundtruth-dynamic-benchmarking">Benchmark dataset ↗</a>
@@ -87,10 +103,20 @@
   </div>
 
   <div class="controls">
-    <label for="rubric-filter">Rubric:</label>
-    <select id="rubric-filter"><option value="__all__">All</option></select>
+    <div class="control-group">
+      <span>View:</span>
+      <div class="seg" id="view-toggle">
+        <button data-view="model" class="active">By model</button>
+        <button data-view="harness">By harness</button>
+      </div>
+    </div>
+    <div class="control-group">
+      <label for="rubric-filter">Rubric:</label>
+      <select id="rubric-filter"><option value="__all__">All</option></select>
+    </div>
   </div>
 
+  <div id="banner"></div>
   <div id="status" class="status">Loading…</div>
   <div id="table-container"></div>
 
@@ -99,13 +125,19 @@
       <strong>Results are self-reported, not independently re-run.</strong>
       Each row is exactly what a submitter's own scoring run produced;
       nothing here is re-verified server-side. Use the "source" link on each
-      row and the linked model repo to check reproducibility yourself.
+      row and the linked model/harness repo to check reproducibility yourself.
     </p>
     <p>
-      This is a pointwise leaderboard: each row is one model's average score
-      against one rubric, not a head-to-head comparison. Rows whose question
-      ids don't match the rubric named in their own <code>meta.json</code>
-      are flagged, not hidden.
+      This is a pointwise leaderboard: each row is one model's (or harness's)
+      average score against one rubric, not a head-to-head comparison. Rows
+      whose question ids don't match the rubric named in their own
+      <code>meta.json</code> are flagged, not hidden.
+    </p>
+    <p>
+      <strong>By harness</strong> fixes the model (see
+      <code>harness_track.json</code> in the benchmark dataset) so only rows
+      calling that exact model are shown, ranked by harness rather than by
+      model — see the submissions dataset README for how to enter.
     </p>
   </footer>
 </main>
@@ -118,9 +150,13 @@ const SUBMISSIONS_REPO = "EigenformAI/groundtruth-dynamic-benchmarking-submissio
 
 const statusEl = document.getElementById("status");
 const containerEl = document.getElementById("table-container");
+const bannerEl = document.getElementById("banner");
 const filterEl = document.getElementById("rubric-filter");
+const viewToggleEl = document.getElementById("view-toggle");
 
 let ALL_ROWS = [];
+let HARNESS_TRACK = null;
+let CURRENT_VIEW = "model";
 
 function setStatus(msg) { statusEl.textContent = msg; }
 
@@ -134,10 +170,20 @@ async function fetchText(url) {
   if (!res.ok) throw new Error(`${res.status} fetching ${url}`);
   return res.text();
 }
+async function fetchJsonOptional(url) {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (e) { return null; }
+}
 
 async function loadRubricRegistry() {
-  // rubrics.json at the dataset repo root: [{key, label, questions_file, ...}, ...]
   return fetchJson(`${DATASET_RESOLVE}/${RUBRIC_REPO}/resolve/main/rubrics.json`);
+}
+
+async function loadHarnessTrack() {
+  return fetchJsonOptional(`${DATASET_RESOLVE}/${RUBRIC_REPO}/resolve/main/harness_track.json`);
 }
 
 async function loadRubricQuestionIds(questionsFile) {
@@ -165,6 +211,10 @@ async function listSubmissionSlugs() {
 
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function isNoHarness(name) {
+  return !name || /^none\b/i.test(name.trim());
 }
 
 async function loadSubmission(slug, rubricsByKey) {
@@ -200,6 +250,9 @@ async function loadSubmission(slug, rubricsByKey) {
   }
   if (scores.length === 0) warnings.push("scores.json is empty.");
 
+  const harnessName = meta.harness_name || null;
+  const onReferenceModel = HARNESS_TRACK && meta.candidate_model_id === HARNESS_TRACK.reference_model_id;
+
   return {
     slug, meta, warnings, skip: false,
     rubricKey, rubricLabel: rubricInfo.label,
@@ -207,23 +260,44 @@ async function loadSubmission(slug, rubricsByKey) {
     avgScore: scoreN ? scoreSum / scoreN : null,
     gatePassRate: gateTotalN ? gatePassN / gateTotalN : null,
     adjFlags,
+    harnessName,
+    harnessIsNone: isNoHarness(harnessName),
+    onReferenceModel,
   };
 }
 
-function rowHtml(r) {
+function rowHtml(r, view) {
   const m = r.meta || {};
   const scoreCell = r.skip || r.avgScore === null ? "—" : `<span class="score">${r.avgScore.toFixed(2)}</span>`;
   const gateCell = r.skip || r.gatePassRate === null ? "—" : `${Math.round(r.gatePassRate * 100)}%`;
   const rubricCell = r.skip ? "—" : `<span class="rubric-tag">${escapeHtml(r.rubricLabel || r.rubricKey)}</span>`;
   const warnHtml = (r.warnings || []).map(w => `<div class="warn">${escapeHtml(w)}</div>`).join("");
   const modelName = escapeHtml(m.model_name || r.slug);
-  const modelId = m.candidate_model_id ? `<div class="sub" style="color:var(--muted);font-size:0.82rem">${escapeHtml(m.candidate_model_id)}</div>` : "";
+  const modelId = m.candidate_model_id ? `<div class="sub">${escapeHtml(m.candidate_model_id)}</div>` : "";
   const contactLink = m.contact_or_repo
     ? `<a href="${escapeHtml(m.contact_or_repo)}">${escapeHtml(m.submitter || m.contact_or_repo)}</a>` : escapeHtml(m.submitter || "—");
   const sourceLink = `${DATASET_RESOLVE}/${SUBMISSIONS_REPO}/blob/main/submissions/${r.slug}/scores.json`;
 
+  const harnessLabel = r.skip ? "—" : (r.harnessIsNone
+    ? `<span class="harness-tag none">no harness</span>`
+    : `<span class="harness-tag">${escapeHtml(r.harnessName)}</span>`);
+  const harnessLink = !r.skip && m.harness_repo
+    ? `<div class="sub"><a href="${escapeHtml(m.harness_repo)}">harness repo ↗</a></div>` : "";
+
+  let identityCell;
+  if (view === "harness") {
+    identityCell = `<div class="primary">${harnessLabel}</div>${harnessLink}${warnHtml}`;
+  } else {
+    identityCell = `<div class="primary">${modelName}</div>${modelId}${r.skip ? "" : (r.harnessIsNone ? "" : `<div class="sub">harness: ${escapeHtml(r.harnessName)}</div>`)}${warnHtml}`;
+  }
+
+  const secondaryCell = view === "harness"
+    ? `<div class="primary">${modelName}</div>${modelId}`
+    : harnessLabel;
+
   return `<tr data-rubric="${escapeHtml(r.rubricKey || "")}">
-    <td><div class="model">${modelName}</div>${modelId}${warnHtml}</td>
+    <td>${identityCell}</td>
+    <td>${secondaryCell}</td>
     <td>${rubricCell}</td>
     <td class="num">${scoreCell}</td>
     <td class="num">${gateCell}</td>
@@ -234,9 +308,12 @@ function rowHtml(r) {
   </tr>`;
 }
 
-function renderTable(rows) {
+function renderTable(rows, view) {
   if (rows.length === 0) {
-    containerEl.innerHTML = `<p class="empty">No submissions yet. Be the first — see the "Submit a result" link above.</p>`;
+    const msg = view === "harness"
+      ? `No harness-track submissions yet for this rubric. Be the first — see the "Submit a result" link above.`
+      : `No submissions yet. Be the first — see the "Submit a result" link above.`;
+    containerEl.innerHTML = `<p class="empty">${msg}</p>`;
     return;
   }
   const sorted = [...rows].sort((a, b) => {
@@ -245,26 +322,55 @@ function renderTable(rows) {
     return (b.avgScore ?? -1) - (a.avgScore ?? -1);
   });
 
+  const col1 = view === "harness" ? "Harness" : "Model";
+  const col2 = view === "harness" ? "Model" : "Harness";
+
   containerEl.innerHTML = `<table>
     <thead><tr>
-      <th>Model</th><th>Rubric</th>
+      <th>${col1}</th><th>${col2}</th><th>Rubric</th>
       <th class="num">Avg score /10</th><th class="num">Gate pass</th><th class="num">Adj. flags</th>
       <th>Submitted</th><th>By</th><th>Source</th>
     </tr></thead>
-    <tbody>${sorted.map(rowHtml).join("")}</tbody>
+    <tbody>${sorted.map(r => rowHtml(r, view)).join("")}</tbody>
   </table>`;
 }
 
-function applyFilter() {
-  const val = filterEl.value;
-  const rows = val === "__all__" ? ALL_ROWS : ALL_ROWS.filter(r => r.rubricKey === val);
-  renderTable(rows);
+function renderBanner() {
+  if (CURRENT_VIEW !== "harness") { bannerEl.innerHTML = ""; return; }
+  if (!HARNESS_TRACK) {
+    bannerEl.innerHTML = `<div class="banner">Harness track config (<code>harness_track.json</code>) not found on the benchmark dataset — can't determine the reference model.</div>`;
+    return;
+  }
+  bannerEl.innerHTML = `<div class="banner">
+    <strong>Fixed model:</strong> ${escapeHtml(HARNESS_TRACK.reference_model_label || HARNESS_TRACK.reference_model_id)}
+    (<code>${escapeHtml(HARNESS_TRACK.reference_model_id)}</code>) — only submissions calling this exact model are shown,
+    ranked by harness rather than by model. "no harness" rows are Kimi K3 called directly, the baseline every harness is trying to beat.
+  </div>`;
 }
+
+function applyFilter() {
+  const rubricVal = filterEl.value;
+  let rows = rubricVal === "__all__" ? ALL_ROWS : ALL_ROWS.filter(r => r.rubricKey === rubricVal);
+  if (CURRENT_VIEW === "harness") {
+    rows = rows.filter(r => r.onReferenceModel);
+  }
+  renderBanner();
+  renderTable(rows, CURRENT_VIEW);
+}
+
+viewToggleEl.addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-view]");
+  if (!btn) return;
+  CURRENT_VIEW = btn.dataset.view;
+  for (const b of viewToggleEl.querySelectorAll("button")) b.classList.toggle("active", b === btn);
+  applyFilter();
+});
 
 async function main() {
   try {
     setStatus("Loading rubric registry…");
-    const registry = await loadRubricRegistry();
+    const [registry, harnessTrack] = await Promise.all([loadRubricRegistry(), loadHarnessTrack()]);
+    HARNESS_TRACK = harnessTrack;
 
     setStatus(`Loading ${registry.length} rubric question set(s)…`);
     const rubricsByKey = {};
@@ -293,7 +399,7 @@ async function main() {
 
     ALL_ROWS = rows;
     setStatus(`${rows.length} submission(s) across ${registry.length} rubric(s) · updated ${new Date().toISOString().slice(0, 16).replace("T", " ")} UTC`);
-    renderTable(rows);
+    applyFilter();
   } catch (e) {
     setStatus("");
     containerEl.innerHTML = `<p class="error">Couldn't load the leaderboard: ${escapeHtml(e.message)}</p>`;
