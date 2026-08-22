@@ -80,6 +80,16 @@ All defaults land in `output/` (git-ignored):
 
 Re-running with the same `--output` file **resumes**: completed question ids are skipped (matched by id *and* question text, so a stale file from a different rubric is never silently reused) and failed entries are retried.
 
+## On Hugging Face
+
+The rubric, corpus, and grading keys are also published as a
+[Hugging Face dataset](https://huggingface.co/datasets/EigenformAI/groundtruth-dynamic-benchmarking),
+loadable directly with `datasets.load_dataset("EigenformAI/groundtruth-dynamic-benchmarking", "yudnamutana")`.
+Community results (run this harness yourself, then submit your `scores.json`)
+show up on the [leaderboard](https://eigenformai.github.io/groundtruth-dynamic-benchmarking/leaderboard/) —
+submission instructions are in the
+[submissions dataset README](https://huggingface.co/datasets/EigenformAI/groundtruth-dynamic-benchmarking-submissions).
+
 ## Google Sheets export
 
 `scripts/export_sheets.py` pushes answer or scoring files into a Google Spreadsheet (one-time GCP service-account setup — see the docstring at the top of that file). `start_eval.sh` offers this automatically after a scoring run.
