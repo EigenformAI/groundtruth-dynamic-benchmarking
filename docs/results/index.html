@@ -1,0 +1,861 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Three Districts</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap">
+<style>
+  /* ---------- tokens: complete light palette on bare :root ---------- */
+  :root {
+    color-scheme: light;
+    --bg: #f9f9f7;         --surface: #fcfcfb;
+    --ink: #0b0b0b;        --ink2: #52514e;       --muted: #898781;
+    --grid: #e1e0d9;       --rule: #c3c2b7;       --border: rgba(11,11,11,.10);
+    --accent: #8a6b21;     --crit: #d03b3b;
+    --m0: #2a78d6; --m1: #eb6834; --m2: #1baf7a;
+    --m3: #eda100; --m4: #e87ba4; --m5: #008300; --m6: #4a3aa7;
+    --h1:#cde2fb; --h2:#b7d3f6; --h3:#9ec5f4; --h4:#86b6ef; --h5:#6da7ec;
+    --h6:#5598e7; --h7:#3987e5; --h8:#2a78d6; --h9:#1c5cab; --h10:#0d366b;
+    --wash: rgba(42,120,214,.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #0d0d0d;         --surface: #1a1a19;
+      --ink: #ffffff;        --ink2: #c3c2b7;       --muted: #898781;
+      --grid: #2c2c2a;       --rule: #383835;       --border: rgba(255,255,255,.10);
+      --accent: #d4b254;     --crit: #e66767;
+      --m0: #3987e5; --m1: #d95926; --m2: #199e70;
+      --m3: #c98500; --m4: #d55181; --m5: #008300; --m6: #9085e9; --m6: #9085e9;
+      --h1:#0d366b; --h2:#104281; --h3:#184f95; --h4:#1c5cab; --h5:#256abf;
+      --h6:#2a78d6; --h7:#3987e5; --h8:#6da7ec; --h9:#9ec5f4; --h10:#cde2fb;
+      --wash: rgba(57,135,229,.07);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #0d0d0d;         --surface: #1a1a19;
+    --ink: #ffffff;        --ink2: #c3c2b7;       --muted: #898781;
+    --grid: #2c2c2a;       --rule: #383835;       --border: rgba(255,255,255,.10);
+    --accent: #d4b254;     --crit: #e66767;
+    --m0: #3987e5; --m1: #d95926; --m2: #199e70;
+    --m3: #c98500; --m4: #d55181; --m5: #008300;
+    --h1:#0d366b; --h2:#104281; --h3:#184f95; --h4:#1c5cab; --h5:#256abf;
+    --h6:#2a78d6; --h7:#3987e5; --h8:#6da7ec; --h9:#9ec5f4; --h10:#cde2fb;
+    --wash: rgba(57,135,229,.07);
+  }
+
+  /* ---------- base ---------- */
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 15px; line-height: 1.55; margin: 0;
+  }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 0 24px 96px; }
+  .serif { font-family: "Source Serif 4", Georgia, "Times New Roman", serif; }
+  .mono  { font-family: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace; }
+  a { color: var(--accent); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* masthead */
+  header { border-top: 3px solid var(--ink); border-bottom: 1px solid var(--rule);
+           padding: 26px 0 22px; margin-bottom: 8px; }
+  .eyebrow { font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+             color: var(--accent); font-weight: 600; margin: 0 0 10px; }
+  h1 { font-family: "Source Serif 4", Georgia, serif; font-weight: 700;
+       font-size: clamp(34px, 5.5vw, 52px); line-height: 1.04; margin: 0 0 12px;
+       letter-spacing: -.01em; text-wrap: balance; }
+  .stand { color: var(--ink2); max-width: 62ch; margin: 0; font-size: 16px; }
+
+  .statstrip { display: flex; flex-wrap: wrap; gap: 0 36px; padding: 16px 0;
+               border-bottom: 1px solid var(--rule); margin-bottom: 8px; }
+  .stat { padding: 6px 0; }
+  .stat b { display: block; font-size: 22px; font-weight: 600;
+            font-family: "IBM Plex Mono", monospace; }
+  .stat span { font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
+               color: var(--muted); }
+
+  /* sections */
+  section { margin-top: 64px; }
+  .secno { font-family: "IBM Plex Mono", monospace; font-size: 12px;
+           color: var(--accent); letter-spacing: .1em; }
+  h2 { font-family: "Source Serif 4", Georgia, serif; font-weight: 600;
+       font-size: 28px; margin: 6px 0 8px; letter-spacing: -.005em; text-wrap: balance; }
+  .lede { color: var(--ink2); max-width: 68ch; margin: 0 0 22px; }
+  .note { color: var(--muted); font-size: 13px; max-width: 74ch; margin: 12px 0 0; }
+  .note b { color: var(--ink2); }
+
+  .panel { background: var(--surface); border: 1px solid var(--border);
+           border-radius: 6px; padding: 18px 18px 14px; }
+  .panel + .panel { margin-top: 16px; }
+  .paneltitle { font-size: 12px; font-weight: 600; letter-spacing: .06em;
+                text-transform: uppercase; color: var(--ink2); margin: 0 0 12px; }
+  .scroller { overflow-x: auto; }
+  svg { display: block; }
+  svg text { font-family: "Archivo", system-ui, sans-serif; }
+  .tick { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; fill: var(--muted); }
+  .dlab { font-size: 12px; font-weight: 600; fill: var(--ink); }
+  .vlab { font-family: "IBM Plex Mono", monospace; font-size: 11px; fill: var(--ink2); }
+  .gline { stroke: var(--grid); stroke-width: 1; }
+  .axline { stroke: var(--rule); stroke-width: 1; }
+
+  /* model color hooks */
+  .f0{fill:var(--m0)} .f1{fill:var(--m1)} .f2{fill:var(--m2)}
+  .f3{fill:var(--m3)} .f4{fill:var(--m4)} .f5{fill:var(--m5)} .f6{fill:var(--m6)}
+  .s0{stroke:var(--m0)} .s1{stroke:var(--m1)} .s2{stroke:var(--m2)}
+  .s3{stroke:var(--m3)} .s4{stroke:var(--m4)} .s5{stroke:var(--m5)} .s6{stroke:var(--m6)}
+
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 0 0 14px; }
+  .chip { display: inline-flex; align-items: center; gap: 7px; font-size: 13px;
+          color: var(--ink2); }
+  .chip i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+
+  /* tables */
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  th { text-align: left; font-size: 11px; letter-spacing: .07em; text-transform: uppercase;
+       color: var(--muted); font-weight: 600; padding: 8px 12px 8px 0;
+       border-bottom: 1px solid var(--rule); }
+  td { padding: 8px 12px 8px 0; border-bottom: 1px solid var(--grid);
+       font-variant-numeric: tabular-nums; }
+  td.num, th.num { text-align: right; font-family: "IBM Plex Mono", monospace; font-size: 12.5px; }
+  tr:last-child td { border-bottom: none; }
+
+  /* tabs */
+  .tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+  .tab { font: 600 13px "Archivo", sans-serif; color: var(--ink2);
+         background: none; border: 1px solid var(--rule); border-radius: 999px;
+         padding: 6px 16px; cursor: pointer; }
+  .tab[aria-selected="true"] { color: var(--bg); background: var(--ink); border-color: var(--ink); }
+
+  /* tooltip */
+  #tip { position: fixed; pointer-events: none; z-index: 50; display: none;
+         background: var(--ink); color: var(--bg); border-radius: 6px;
+         padding: 8px 11px; font-size: 12.5px; line-height: 1.5; max-width: 300px;
+         box-shadow: 0 4px 18px rgba(0,0,0,.25); }
+  #tip .t1 { font-weight: 600; }
+  #tip .t2 { opacity: .75; }
+
+  .caveat { border-left: 3px solid var(--accent); padding: 2px 0 2px 14px;
+            color: var(--ink2); font-size: 13.5px; max-width: 70ch; margin: 16px 0 0; }
+
+  footer.method { margin-top: 72px; border-top: 1px solid var(--rule); padding-top: 24px; }
+  footer.method h2 { font-size: 22px; }
+  footer.method li { margin: 0 0 10px; color: var(--ink2); max-width: 78ch; }
+  footer.method b { color: var(--ink); font-weight: 600; }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 860px) { .grid2, .grid3 { grid-template-columns: 1fr; } }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Source-grounded geology benchmark · August 2026</p>
+    <h1>Three Districts</h1>
+    <p class="stand"><span id="nmodels">Six</span> frontier models answer 150 questions drawn from the primary
+    records of three mining districts — a modern NI 43-101 technical report, four
+    USGS district studies from 1924–27, and a Western Australian WAMEX archive.
+    Every answer is graded against a calibrated, source-anchored rubric.</p>
+  </header>
+
+  <div class="statstrip" id="stats"></div>
+  <div class="legend" id="legend"></div>
+
+  <section id="s1">
+    <span class="secno">01</span>
+    <h2>Tiers, not ranks</h2>
+    <p class="lede">Mean score per question with a bootstrap 95% confidence interval.
+    Where intervals overlap, the benchmark cannot order the models — and it says so.
+    The models split into tiers, and only the boundary between tiers survives
+    testing — the exact order inside a tier is not a claim.</p>
+    <div class="panel"><div class="scroller"><div id="tier"></div></div></div>
+    <div class="panel">
+      <p class="paneltitle">Per district</p>
+      <div class="scroller"><div id="tiersmall"></div></div>
+    </div>
+    <div class="panel">
+      <p class="paneltitle">Leaderboard</p>
+      <div class="scroller"><div id="lbtable"></div></div>
+    </div>
+    <p class="note" id="gapnote"></p>
+  </section>
+
+  <section id="s2">
+    <span class="secno">02</span>
+    <h2>Three corpora, three orderings</h2>
+    <p class="lede">The top tier holds its shape on every corpus. The bottom tier does
+    not: its order depends on which district is asking the questions — which is exactly
+    why this benchmark measures three of them instead of one.</p>
+    <div class="panel"><div class="scroller"><div id="slope"></div></div></div>
+  </section>
+
+  <section id="s3">
+    <span class="secno">03</span>
+    <h2>Price and performance</h2>
+    <p class="lede">What it cost to run each model through all 150 questions, against
+    what it scored. Cost counts only the run that produced each surviving answer, plus
+    judging. Models on the dotted frontier are unbeaten on both axes at once; muted
+    models are dominated — something else is better and cheaper.</p>
+    <div class="panel"><div class="scroller"><div id="pareto"></div></div></div>
+    <div class="panel">
+      <p class="paneltitle">Cost per question</p>
+      <div class="scroller"><div id="cpq"></div></div>
+    </div>
+  </section>
+
+  <section id="s4">
+    <span class="secno">04</span>
+    <h2>Question by question</h2>
+    <p class="lede">Every model's grade on every question, one row per question, sorted by how far
+    the models spread. Rows at the top separate models; uniform rows at the bottom
+    are questions every model handled identically. A red × is a failed gate — an answer
+    wrong about the one thing the question exists to test, scored zero.</p>
+    <div class="panel">
+      <div class="tabs" role="tablist" id="heattabs"></div>
+      <div class="scroller"><div id="heat"></div></div>
+      <p class="note" id="heatnote"></p>
+    </div>
+  </section>
+
+  <section id="s5">
+    <span class="secno">05</span>
+    <h2>Does harder mean harder?</h2>
+    <p class="lede">Mean score by the questions' authored difficulty band. Two districts
+    behave: scores sag as questions get harder and the models spread further apart.
+    The third does not — and that is a finding about the labels, reported rather than
+    hidden.</p>
+    <div class="panel"><div class="scroller"><div id="diffc"></div></div></div>
+    <p class="caveat" id="diffcaveat"></p>
+  </section>
+
+  <section id="s6">
+    <span class="secno">06</span>
+    <h2>How they work</h2>
+    <p class="lede">Effort is not cost, and neither is score. Bubble area is total spend:
+    the hardest-working model is mid-table, the biggest spender searched least, and the
+    runner-up got there on the fewest moves of the leading three.</p>
+    <div class="panel"><div class="scroller"><div id="bubbles"></div></div></div>
+    <div class="panel">
+      <p class="paneltitle">Tool mix — share of each model's calls</p>
+      <div class="scroller"><div id="toolmix"></div></div>
+    </div>
+    <p class="note">Tool calls are counted from each question's saved transcript — only
+    the run that produced the surviving answer. Two models occasionally delegate to a
+    sub-agent (<span class="mono">task</span>), whose internal searches are not counted,
+    so their effort is slightly understated.</p>
+  </section>
+
+  <section id="s7">
+    <span class="secno">07</span>
+    <h2>How finely it measures</h2>
+    <p class="lede">A benchmark is only as good as the smallest difference it can
+    detect. Each district is summarised by its top-to-bottom range, the minimum
+    gap distinguishable from noise at fifty questions, and how many distinct
+    levels fit between the two.</p>
+    <div class="panel">
+      <p class="paneltitle">Resolution — how finely each district separates models</p>
+      <div class="scroller"><div id="restable"></div></div>
+    </div>
+  </section>
+
+  <section id="s8">
+    <span class="secno">08</span>
+    <h2>What it cost</h2>
+    <p class="lede">Generation (the model exploring the corpus and writing) dwarfs
+    judging, and varies six-fold between models doing the same task. The strip below
+    shows every question's cost: some models spend evenly, others are dominated by a
+    few runaway explorations.</p>
+    <div class="panel"><div class="scroller"><div id="costbars"></div></div></div>
+    <div class="panel">
+      <p class="paneltitle">Every question's generation cost (log scale)</p>
+      <div class="scroller"><div id="strip"></div></div>
+    </div>
+  </section>
+
+  <footer class="method">
+    <span class="secno">09</span>
+    <h2>Methodology, and what to hold against it</h2>
+    <ul>
+      <li><b>The task.</b> Each model runs in the same agentic harness (opencode) with
+      identical tools — file reading, search, shell — inside a staged copy of one
+      district's source documents, with the grading materials held outside the
+      reachable filesystem. 250–400 word answers, 50 questions per district.</li>
+      <li><b>The grading.</b> A gate-and-components rubric per question, anchored to
+      verbatim passages of the source records. Judged pointwise (0–10) by
+      <span class="mono">gpt-5.5</span> at temperature 0. A failed gate scores zero
+      regardless of other merit.</li>
+      <li><b>The judge is also a contestant.</b> GPT ranks in the top tier under its own
+      family's judging. The mitigation is empirical — it does not win — but an
+      independent judge is the roadmap item this note exists to disclose.</li>
+      <li><b>The held-out controls.</b> The rubrics were sharpened using answers from
+      five models. Every model added since — Claude Sonnet 5, then OxAlpha — is a
+      held-out control: their answers never touched rubric construction, and both
+      landed where their overall capability suggests, on all three districts. That is
+      direct evidence the instrument generalises beyond the models that shaped it.</li>
+      <li><b>The transcript audit works, and it has caught something.</b> Every answer's
+      tool transcript is audited for grading-key access before its scores are accepted.
+      Across all answers measured so far it has flagged exactly one — an answer whose
+      agent searched upward out of its corpus and read the grading guide. That answer
+      was discarded, regenerated under isolation, re-audited clean, and only then
+      scored. The number on this page you should trust most is the one that process
+      protects.</li>
+      <li><b>One measurement.</b> Each model was scored once per district. The judge is
+      not perfectly deterministic even at temperature 0, so gaps near each district's
+      minimum detectable difference may move on a re-run. Tier membership is stable;
+      exact adjacent orderings inside a tier are not claims.</li>
+      <li><b>Difficulty labels.</b> One district's authored difficulty bands do not
+      predict its empirical difficulty (see §05). Scores are unaffected; per-difficulty
+      analyses for that district should not be quoted.</li>
+      <li><b>Costs are harness costs.</b> Dollars reflect what this benchmark paid via
+      one API broker, including each model's own choice of how much to explore — not
+      list-price comparisons. A model that reads more, pays more.</li>
+    </ul>
+  </footer>
+</div>
+
+<div id="tip" role="status"></div>
+
+<script id="data" type="application/json">{"models":[{"key":"kimi","name":"Kimi K3"},{"key":"sonnet5","name":"Claude Sonnet 5"},{"key":"gpt","name":"GPT 5.6 Sol"},{"key":"deepseek","name":"Deepseek V4 Pro"},{"key":"grok","name":"Grok 4.6"},{"key":"gemini","name":"Gemini 3.1 Pro Preview"},{"key":"OxAlpha","name":"OxAlpha"}],"sites":[{"key":"technical","label":"Technical"},{"key":"wamex","label":"WAMEX"},{"key":"usgs","label":"USGS"}],"leaderboard":[{"key":"kimi","name":"Kimi K3","total":1322,"mean":8.81,"ci":[8.66,8.967],"rank":"1-2","perSite":{"technical":{"total":431,"mean":8.62,"ci":[8.32,8.92]},"wamex":{"total":455,"mean":9.1,"ci":[8.88,9.3]},"usgs":{"total":436,"mean":8.72,"ci":[8.46,8.98]}},"gateFails":0},{"key":"sonnet5","name":"Claude Sonnet 5","total":1293,"mean":8.62,"ci":[8.36,8.84],"rank":"1-4","perSite":{"technical":{"total":423,"mean":8.46,"ci":[8.02,8.8]},"wamex":{"total":443,"mean":8.86,"ci":[8.4,9.22]},"usgs":{"total":427,"mean":8.54,"ci":[8.08,8.92]}},"gateFails":3},{"key":"gpt","name":"GPT 5.6 Sol","total":1275,"mean":8.5,"ci":[8.32,8.68],"rank":"2-4","perSite":{"technical":{"total":418,"mean":8.36,"ci":[8.1,8.62]},"wamex":{"total":444,"mean":8.88,"ci":[8.62,9.14]},"usgs":{"total":413,"mean":8.26,"ci":[7.9,8.6]}},"gateFails":0},{"key":"OxAlpha","name":"OxAlpha","total":1266,"mean":8.44,"ci":[8.147,8.693],"rank":"2-4","perSite":{"technical":{"total":411,"mean":8.22,"ci":[7.62,8.72]},"wamex":{"total":434,"mean":8.68,"ci":[8.1,9.12]},"usgs":{"total":421,"mean":8.42,"ci":[8.12,8.72]}},"gateFails":4},{"key":"deepseek","name":"Deepseek V4 Pro","total":1169,"mean":7.79,"ci":[7.573,8.007],"rank":"5-6","perSite":{"technical":{"total":367,"mean":7.34,"ci":[6.9,7.72]},"wamex":{"total":423,"mean":8.46,"ci":[8.2,8.72]},"usgs":{"total":379,"mean":7.58,"ci":[7.2,7.94]}},"gateFails":1},{"key":"grok","name":"Grok 4.6","total":1160,"mean":7.73,"ci":[7.507,7.953],"rank":"5-7","perSite":{"technical":{"total":381,"mean":7.62,"ci":[7.26,7.96]},"wamex":{"total":421,"mean":8.42,"ci":[8.18,8.64]},"usgs":{"total":358,"mean":7.16,"ci":[6.66,7.6]}},"gateFails":1},{"key":"gemini","name":"Gemini 3.1 Pro Preview","total":1132,"mean":7.55,"ci":[7.32,7.767],"rank":"6-7","perSite":{"technical":{"total":381,"mean":7.62,"ci":[7.28,7.96]},"wamex":{"total":388,"mean":7.76,"ci":[7.3,8.14]},"usgs":{"total":363,"mean":7.26,"ci":[6.9,7.64]}},"gateFails":1}],"gaps":[{"a":"kimi","b":"sonnet5","diff":0.19,"p":0.1111,"sig":false},{"a":"sonnet5","b":"gpt","diff":0.12,"p":0.3866,"sig":false},{"a":"gpt","b":"OxAlpha","diff":0.06,"p":0.7023,"sig":false},{"a":"OxAlpha","b":"deepseek","diff":0.65,"p":0.0,"sig":true},{"a":"deepseek","b":"grok","diff":0.06,"p":0.648,"sig":false},{"a":"grok","b":"gemini","diff":0.19,"p":0.1587,"sig":false}],"questions":{"technical":[{"id":"D20","title":"Two routes from till to bedrock","diff":"Hard","sec":"","scores":{"kimi":10,"sonnet5":0,"gpt":10,"deepseek":0,"grok":9,"gemini":9,"OxAlpha":0},"spread":10},{"id":"I44","title":"Which cut-off grade applies to Orion","diff":"Hard","sec":"","scores":{"kimi":8,"sonnet5":9,"gpt":7,"deepseek":7,"grok":8,"gemini":5,"OxAlpha":0},"spread":9},{"id":"A1","title":"Shebandowan Greenstone Belt setting","diff":"Easy","sec":"","scores":{"kimi":10,"sonnet5":9,"gpt":7,"deepseek":8,"grok":6,"gemini":7,"OxAlpha":10},"spread":4},{"id":"F30","title":"How many holes were drilled","diff":"Hard","sec":"","scores":{"kimi":9,"sonnet5":9,"gpt":8,"deepseek":5,"grok":6,"gemini":6,"OxAlpha":9},"spread":4},{"id":"G31","title":"What blanks and standards each tell you","diff":"Easy","sec":"","scores":{"kimi":8,"sonnet5":7,"gpt":8,"deepseek":6,"grok":6,"gemini":7,"OxAlpha":10},"spread":4},{"id":"A2","title":"Three supracrustal assemblages","diff":"Moderate","sec":"","scores":{"kimi":9,"sonnet5":8,"gpt":7,"deepseek":8,"grok":8,"gemini":9,"OxAlpha":10},"spread":3},{"id":"A3","title":"La Grande basement and cover","diff":"Moderate","sec":"","scores":{"kimi":10,"sonnet5":8,"gpt":10,"deepseek":8,"grok":7,"gemini":10,"OxAlpha":10},"spread":3},{"id":"B10","title":"A targeting model against three properties","diff":"Expert","sec":"","scores":{"kimi":10,"sonnet5":9,"gpt":8,"deepseek":8,"grok":9,"gemini":7,"OxAlpha":10},"spread":3},{"id":"C12","title":"Four styles of gold mineralisation at South Uchi","diff":"Moderate","sec":"","scores":{"kimi":8,"sonnet5":7,"gpt":7,"deepseek":7,"grok":5,"gemini":5,"OxAlpha":8},"spread":3},{"id":"C14","title":"Rheological control at Stog'er Tight","diff":"Hard","sec":"","scores":{"kimi":9,"sonnet5":9,"gpt":9,"deepseek":6,"grok":7,"gemini":8,"OxAlpha":8},"spread":3},{"id":"D16","title":"Heavy mineral concentrate till sampling","diff":"Easy","sec":"","scores":{"kimi":9,"sonnet5":10,"gpt":8,"deepseek":7,"grok":8,"gemini":8,"OxAlpha":10},"spread":3},{"id":"D19","title":"Structural or glacial origin for a till trend","diff":"Hard","sec":"","scores":{"kimi":9,"sonnet5":9,"gpt":9,"deepseek":7,"grok":6,"gemini":9,"OxAlpha":8},"spread":3},{"id":"E24","title":"Weighing a coincident anomaly at Target B","diff":"Hard","sec":"","scores":{"kimi":10,"sonnet5":9,"gpt":8,"deepseek":7,"grok":8,"gemini":8,"OxAlpha":9},"spread":3},{"id":"F26","title":"Downhole length and true thickness","diff":"Easy","sec":"","scores":{"kimi":10,"sonnet5":9,"gpt":8,"deepseek":7,"grok":9,"gemini":9,"OxAlpha":9},"spread":3},{"id":"G35","title":"A conclusion stated too strongly","diff":"Expert","sec":"","scores":{"kimi":9,"sonnet5":8,"gpt":8,"deepseek":7,"grok":8,"gemini":6,"OxAlpha":8},"spread":3},{"id":"H37","title":"Three datasets, three verdicts","diff":"Moderate","sec":"","scores":{"kimi":7,"sonnet5":7,"gpt":8,"deepseek":6,"grok":6,"gemini":5,"OxAlpha":6},"spread":3},{"id":"I43","title":"Different deposits, different estimation parameters","diff":"Hard","sec":"","scores":{"kimi":10,"sonnet5":9,"gpt":8,"deepseek":7,"grok":7,"gemini":9,"OxAlpha":9},"spread":3},{"id":"J46","title":"What a preliminary economic assessment is worth","diff":"Easy","sec":"","scores":{"kimi":6,"sonnet5":8,"gpt":6,"deepseek":6,"grok":5,"gemini":6,"OxAlpha":6},"spread":3},{"id":"A4","title":"A provisional stratigraphic assignment","diff":"Hard","sec":"","scores":{"kimi":7,"sonnet5":8,"gpt":9,"deepseek":7,"grok":7,"gemini":7,"OxAlpha":7},"spread":2},{"id":"B6","title":"The Boundary Fault Zone","diff":"Easy","sec":"","scores":{"kimi":9,"sonnet5":8,"gpt":9,"deepseek":7,"grok":8,"gemini":7,"OxAlpha":9},"spread":2},{"id":"B7","title":"Lake St. Joseph Deformation Zone and its splays","diff":"Moderate","sec":"","scores":{"kimi":8,"sonnet5":8,"gpt":7,"deepseek":7,"grok":6,"gemini":7,"OxAlpha":8},"spread":2},{"id":"B8","title":"Two shear-zone sets and their intersection","diff":"Moderate","sec":"","scores":{"kimi":7,"sonnet5":8,"gpt":8,"deepseek":7,"grok":7,"gemini":6,"OxAlpha":8},"spread":2},{"id":"B9","title":"The Captain Nemo Fault","diff":"Hard","sec":"","scores":{"kimi":10,"sonnet5":10,"gpt":10,"deepseek":8,"grok":10,"gemini":8,"OxAlpha":10},"spread":2},{"id":"C15","title":"Four deposit types on one property, and the odd one out","diff":"Hard","sec":"","scores":{"kimi":9,"sonnet5":8,"gpt":9,"deepseek":7,"grok":8,"gemini":8,"OxAlpha":7},"spread":2},{"id":"D18","title":"Why till results must be normalised","diff":"Moderate","sec":"","scores":{"kimi":9,"sonnet5":9,"gpt":8,"deepseek":7,"grok":7,"gemini":8,"OxAlpha":9},"spread":2},{"id":"E22","title":"Two bodies of geophysical data, treated differently","diff":"Moderate","sec":"","scores":{"kimi":8,"sonnet5":8,"gpt":9,"deepseek":8,"grok":7,"gemini":7,"OxAlpha":8},"spread":2},{"id":"F29","title":"A headline intersection and its qualification","diff":"Hard","sec":"","scores":{"kimi":8,"sonnet5":8,"gpt":8,"deepseek":7,"grok":6,"gemini":6,"OxAlpha":8},"spread":2},{"id":"G32","title":"Why a second assay finish exists","diff":"Moderate","sec":"","scores":{"kimi":9,"sonnet5":10,"gpt":9,"deepseek":8,"grok":8,"gemini":8,"OxAlpha":9},"spread":2},{"id":"G33","title":"Two grades from one interval at Moby-Dick","diff":"Moderate","sec":"","scores":{"kimi":6,"sonnet5":8,"gpt":7,"deepseek":6,"grok":8,"gemini":8,"OxAlpha":8},"spread":2},{"id":"G34","title":"Three control regimes on one property","diff":"Hard","sec":"","scores":{"kimi":9,"sonnet5":9,"gpt":9,"deepseek":8,"grok":9,"gemini":7,"OxAlpha":9},"spread":2},{"id":"H40","title":"Scope difference or contradiction","diff":"Expert","sec":"","scores":{"kimi":8,"sonnet5":8,"gpt":7,"deepseek":6,"grok":6,"gemini":6,"OxAlpha":6},"spread":2},{"id":"I41","title":"Resource, reserve and reasonable prospects","diff":"Easy","sec":"","scores":{"kimi":9,"sonnet5":9,"gpt":9,"deepseek":9,"grok":9,"gemini":7,"OxAlpha":9},"spread":2},{"id":"I45","title":"Whose resource is it","diff":"Expert","sec":"","scores":{"kimi":7,"sonnet5":7,"gpt":7,"deepseek":6,"grok":5,"gemini":7,"OxAlpha":7},"spread":2},{"id":"J47","title":"The Pine Cove process route","diff":"Moderate","sec":"","scores":{"kimi":8,"sonnet5":9,"gpt":8,"deepseek":7,"grok":8,"gemini":8,"OxAlpha":9},"spread":2},{"id":"J50","title":"An economic result with no rate of return","diff":"Expert","sec":"","scores":{"kimi":8,"sonnet5":9,"gpt":9,"deepseek":7,"grok":8,"gemini":7,"OxAlpha":8},"spread":2},{"id":"A5","title":"Newfoundland Appalachian framework","diff":"Hard","sec":"","scores":{"kimi":8,"sonnet5":9,"gpt":8,"deepseek":8,"grok":8,"gemini":8,"OxAlpha":8},"spread":1},{"id":"C11","title":"Greenstone-hosted quartz-carbonate vein deposits","diff":"Easy","sec":"","scores":{"kimi":9,"sonnet5":9,"gpt":9,"deepseek":9,"grok":9,"gemini":9,"OxAlpha":10},"spread":1},{"id":"D17","title":"One target, three sample media","diff":"Moderate","sec":"","scores":{"kimi":9,"sonnet5":9,"gpt":9,"deepseek":9,"grok":9,"gemini":8,"OxAlpha":9},"spread":1},{"id":"E21","title":"Choosing a magnetic method","diff":"Easy","sec":"","scores":{"kimi":8,"sonnet5":9,"gpt":9,"deepseek":9,"grok":8,"gemini":9,"OxAlpha":9},"spread":1},{"id":"E23","title":"Survey design on the Serpent-Radisson Property","diff":"Moderate","sec":"","scores":{"kimi":9,"sonnet5":9,"gpt":8,"deepseek":8,"grok":8,"gemini":8,"OxAlpha":9},"spread":1},{"id":"E25","title":"What else causes an anomaly","diff":"Hard","sec":"","scores":{"kimi":10,"sonnet5":10,"gpt":10,"deepseek":10,"grok":10,"gemini":9,"OxAlpha":10},"spread":1},{"id":"F27","title":"Design and outcome of a maiden drill programme","diff":"Moderate","sec":"","scores":{"kimi":10,"sonnet5":9,"gpt":10,"deepseek":9,"grok":9,"gemini":9,"OxAlpha":9},"spread":1},{"id":"F28","title":"Two phases in one season","diff":"Moderate","sec":"","scores":{"kimi":10,"sonnet5":10,"gpt":9,"deepseek":9,"grok":9,"gemini":10,"OxAlpha":9},"spread":1},{"id":"H36","title":"When a chapter heading means nothing","diff":"Easy","sec":"","scores":{"kimi":8,"sonnet5":9,"gpt":9,"deepseek":8,"grok":8,"gemini":8,"OxAlpha":8},"spread":1},{"id":"H38","title":"Two production figures for one mine","diff":"Hard","sec":"","scores":{"kimi":10,"sonnet5":10,"gpt":10,"deepseek":9,"grok":9,"gemini":9,"OxAlpha":10},"spread":1},{"id":"H39","title":"What a collar check verifies","diff":"Hard","sec":"","scores":{"kimi":8,"sonnet5":8,"gpt":8,"deepseek":8,"grok":7,"gemini":7,"OxAlpha":8},"spread":1},{"id":"J48","title":"From laboratory recovery to operating recovery","diff":"Hard","sec":"","scores":{"kimi":7,"sonnet5":8,"gpt":7,"deepseek":7,"grok":7,"gemini":7,"OxAlpha":7},"spread":1},{"id":"J49","title":"Three gold prices for three purposes","diff":"Expert","sec":"","scores":{"kimi":8,"sonnet5":9,"gpt":9,"deepseek":8,"grok":8,"gemini":8,"OxAlpha":9},"spread":1},{"id":"C13","title":"Two quartz generations at Huronian","diff":"Moderate","sec":"","scores":{"kimi":8,"sonnet5":8,"gpt":8,"deepseek":8,"grok":8,"gemini":8,"OxAlpha":8},"spread":0},{"id":"I42","title":"Reading a categorised resource table","diff":"Moderate","sec":"","scores":{"kimi":9,"sonnet5":9,"gpt":9,"deepseek":9,"grok":9,"gemini":9,"OxAlpha":9},"spread":0}],"wamex":[{"id":"F29","title":"What the consolidated geochemistry tables will support","diff":"Hard","sec":"Geochemical sampling, analysis and interpretation","scores":{"kimi":10,"sonnet5":10,"gpt":9,"deepseek":7,"grok":9,"gemini":0,"OxAlpha":8},"spread":10},{"id":"A1","title":"Setting of the eastern tenement ground","diff":"Easy","sec":"Regional setting, stratigraphy and igneous framework","scores":{"kimi":8,"sonnet5":7,"gpt":7,"deepseek":8,"grok":7,"gemini":6,"OxAlpha":0},"spread":8},{"id":"E25","title":"Sampling beneath a transported veneer","diff":"Hard","sec":"Regolith, weathering and supergene processes","scores":{"kimi":8,"sonnet5":8,"gpt":8,"deepseek":7,"grok":8,"gemini":8,"OxAlpha":0},"spread":8},{"id":"I41","title":"Who held the ground","diff":"Easy","sec":"Exploration history and the evolution of models","scores":{"kimi":7,"sonnet5":0,"gpt":7,"deepseek":7,"grok":7,"gemini":7,"OxAlpha":8},"spread":8},{"id":"F30","title":"An element used as a lithology discriminator","diff":"Expert","sec":"Geochemical sampling, analysis and interpretation","scores":{"kimi":10,"sonnet5":10,"gpt":10,"deepseek":10,"grok":10,"gemini":6,"OxAlpha":9},"spread":4},{"id":"I44","title":"Two reports, one text","diff":"Hard","sec":"Exploration history and the evolution of models","scores":{"kimi":10,"sonnet5":10,"gpt":9,"deepseek":9,"grok":8,"gemini":6,"OxAlpha":9},"spread":4},{"id":"A4","title":"Two names for the greenstone belt","diff":"Hard","sec":"Regional setting, stratigraphy and igneous framework","scores":{"kimi":9,"sonnet5":9,"gpt":8,"deepseek":8,"grok":7,"gemini":6,"OxAlpha":9},"spread":3},{"id":"B7","title":"Why two deformation events, not one","diff":"Moderate","sec":"Structure, deformation and shear-zone architecture","scores":{"kimi":10,"sonnet5":9,"gpt":10,"deepseek":8,"grok":7,"gemini":10,"OxAlpha":10},"spread":3},{"id":"B8","title":"A disagreement about a major shear","diff":"Hard","sec":"Structure, deformation and shear-zone architecture","scores":{"kimi":9,"sonnet5":9,"gpt":10,"deepseek":9,"grok":8,"gemini":7,"OxAlpha":10},"spread":3},{"id":"B9","title":"Telling two fabrics apart","diff":"Hard","sec":"Structure, deformation and shear-zone architecture","scores":{"kimi":10,"sonnet5":10,"gpt":10,"deepseek":8,"grok":9,"gemini":7,"OxAlpha":10},"spread":3},{"id":"B10","title":"Locating the Cuddingwarra Shear Zone","diff":"Expert","sec":"Structure, deformation and shear-zone architecture","scores":{"kimi":9,"sonnet5":9,"gpt":7,"deepseek":6,"grok":7,"gemini":9,"OxAlpha":9},"spread":3},{"id":"D19","title":"A magnetic target drilled out","diff":"Hard","sec":"Base metals and the pre-gold exploration era","scores":{"kimi":10,"sonnet5":10,"gpt":10,"deepseek":7,"grok":7,"gemini":8,"OxAlpha":8},"spread":3},{"id":"G31","title":"Magnetics over covered ground","diff":"Easy","sec":"Geophysical surveys: capability and limits","scores":{"kimi":8,"sonnet5":7,"gpt":7,"deepseek":8,"grok":7,"gemini":7,"OxAlpha":10},"spread":3},{"id":"H37","title":"Twinning holes to test a suspicion","diff":"Moderate","sec":"Drilling, sampling and data quality","scores":{"kimi":10,"sonnet5":10,"gpt":7,"deepseek":7,"grok":9,"gemini":8,"OxAlpha":9},"spread":3},{"id":"H39","title":"Angled holes, vertical holes","diff":"Moderate","sec":"Drilling, sampling and data quality","scores":{"kimi":9,"sonnet5":9,"gpt":10,"deepseek":8,"grok":8,"gemini":7,"OxAlpha":10},"spread":3},{"id":"J50","title":"Where resource language is and is not supported","diff":"Expert","sec":"Integrated targeting, resource claims and uncertainty","scores":{"kimi":9,"sonnet5":7,"gpt":10,"deepseek":9,"grok":9,"gemini":8,"OxAlpha":9},"spread":3},{"id":"A3","title":"The Great Cuchulainn Dolerite as a differentiated sill","diff":"Moderate","sec":"Regional setting, stratigraphy and igneous framework","scores":{"kimi":10,"sonnet5":10,"gpt":10,"deepseek":10,"grok":9,"gemini":8,"OxAlpha":10},"spread":2},{"id":"C13","title":"Veins in a mafic\u2013ultramafic sequence","diff":"Moderate","sec":"Gold mineralisation styles and host-rock controls","scores":{"kimi":9,"sonnet5":9,"gpt":9,"deepseek":8,"grok":7,"gemini":7,"OxAlpha":9},"spread":2},{"id":"D16","title":"What the earlier Joint Venture was looking for","diff":"Easy","sec":"Base metals and the pre-gold exploration era","scores":{"kimi":10,"sonnet5":10,"gpt":9,"deepseek":9,"grok":9,"gemini":8,"OxAlpha":9},"spread":2},{"id":"D17","title":"Emily Well and what the drilling outlined","diff":"Moderate","sec":"Base metals and the pre-gold exploration era","scores":{"kimi":9,"sonnet5":8,"gpt":10,"deepseek":9,"grok":8,"gemini":8,"OxAlpha":9},"spread":2},{"id":"E21","title":"Why the logging scheme separates two things","diff":"Easy","sec":"Regolith, weathering and supergene processes","scores":{"kimi":9,"sonnet5":9,"gpt":9,"deepseek":9,"grok":8,"gemini":7,"OxAlpha":9},"spread":2},{"id":"E23","title":"Reading a gap between two worked zones","diff":"Moderate","sec":"Regolith, weathering and supergene processes","scores":{"kimi":9,"sonnet5":9,"gpt":9,"deepseek":8,"grok":8,"gemini":7,"OxAlpha":9},"spread":2},{"id":"E24","title":"An anomaly explained by the landscape","diff":"Hard","sec":"Regolith, weathering and supergene processes","scores":{"kimi":9,"sonnet5":9,"gpt":9,"deepseek":10,"grok":9,"gemini":8,"OxAlpha":9},"spread":2},{"id":"F27","title":"Why Mobile Metal Ions were tried","diff":"Moderate","sec":"Geochemical sampling, analysis and interpretation","scores":{"kimi":8,"sonnet5":9,"gpt":8,"deepseek":7,"grok":8,"gemini":7,"OxAlpha":9},"spread":2},{"id":"F28","title":"One database, two analytical methods","diff":"Hard","sec":"Geochemical sampling, analysis and interpretation","scores":{"kimi":9,"sonnet5":9,"gpt":10,"deepseek":9,"grok":9,"gemini":8,"OxAlpha":9},"spread":2},{"id":"G34","title":"Mapping alteration from the air","diff":"Hard","sec":"Geophysical surveys: capability and limits","scores":{"kimi":10,"sonnet5":9,"gpt":9,"deepseek":10,"grok":9,"gemini":8,"OxAlpha":9},"spread":2},{"id":"H40","title":"Two different reasons to drill","diff":"Hard","sec":"Drilling, sampling and data quality","scores":{"kimi":9,"sonnet5":10,"gpt":10,"deepseek":10,"grok":9,"gemini":8,"OxAlpha":10},"spread":2},{"id":"I42","title":"A thin exploration record","diff":"Moderate","sec":"Exploration history and the evolution of models","scores":{"kimi":10,"sonnet5":9,"gpt":9,"deepseek":9,"grok":9,"gemini":8,"OxAlpha":9},"spread":2},{"id":"I43","title":"A district-scale drilling programme","diff":"Hard","sec":"Exploration history and the evolution of models","scores":{"kimi":10,"sonnet5":10,"gpt":9,"deepseek":8,"grok":9,"gemini":8,"OxAlpha":10},"spread":2},{"id":"I45","title":"The changing role of the porphyry","diff":"Expert","sec":"Exploration history and the evolution of models","scores":{"kimi":9,"sonnet5":9,"gpt":8,"deepseek":8,"grok":9,"gemini":7,"OxAlpha":8},"spread":2},{"id":"J47","title":"What an auger anomaly is worth","diff":"Moderate","sec":"Integrated targeting, resource claims and uncertainty","scores":{"kimi":9,"sonnet5":10,"gpt":9,"deepseek":8,"grok":9,"gemini":8,"OxAlpha":9},"spread":2},{"id":"J49","title":"Ranking three targets","diff":"Expert","sec":"Integrated targeting, resource claims and uncertainty","scores":{"kimi":9,"sonnet5":7,"gpt":9,"deepseek":9,"grok":8,"gemini":8,"OxAlpha":9},"spread":2},{"id":"A2","title":"The Luke Creek Group succession","diff":"Moderate","sec":"Regional setting, stratigraphy and igneous framework","scores":{"kimi":10,"sonnet5":10,"gpt":10,"deepseek":9,"grok":9,"gemini":9,"OxAlpha":10},"spread":1},{"id":"A5","title":"What the granitoids record","diff":"Hard","sec":"Regional setting, stratigraphy and igneous framework","scores":{"kimi":8,"sonnet5":8,"gpt":8,"deepseek":8,"grok":8,"gemini":7,"OxAlpha":8},"spread":1},{"id":"B6","title":"Ordering the structures at Black Swan","diff":"Easy","sec":"Structure, deformation and shear-zone architecture","scores":{"kimi":9,"sonnet5":9,"gpt":9,"deepseek":9,"grok":8,"gemini":8,"OxAlpha":9},"spread":1},{"id":"C11","title":"Two reef sets in the granite","diff":"Easy","sec":"Gold mineralisation styles and host-rock controls","scores":{"kimi":9,"sonnet5":10,"gpt":9,"deepseek":9,"grok":9,"gemini":9,"OxAlpha":9},"spread":1},{"id":"C12","title":"Three settings in one project","diff":"Moderate","sec":"Gold mineralisation styles and host-rock controls","scores":{"kimi":9,"sonnet5":9,"gpt":9,"deepseek":9,"grok":8,"gemini":9,"OxAlpha":9},"spread":1},{"id":"C14","title":"Intersections as ore sites, at two scales","diff":"Hard","sec":"Gold mineralisation styles and host-rock controls","scores":{"kimi":8,"sonnet5":8,"gpt":8,"deepseek":7,"grok":8,"gemini":8,"OxAlpha":8},"spread":1},{"id":"C15","title":"Veining that does not predict grade","diff":"Hard","sec":"Gold mineralisation styles and host-rock controls","scores":{"kimi":8,"sonnet5":8,"gpt":7,"deepseek":7,"grok":8,"gemini":7,"OxAlpha":8},"spread":1},{"id":"D18","title":"Magnetic features and gossanous ironstone","diff":"Moderate","sec":"Base metals and the pre-gold exploration era","scores":{"kimi":9,"sonnet5":10,"gpt":9,"deepseek":9,"grok":9,"gemini":9,"OxAlpha":9},"spread":1},{"id":"D20","title":"Somebody else's discovery","diff":"Hard","sec":"Base metals and the pre-gold exploration era","scores":{"kimi":9,"sonnet5":9,"gpt":9,"deepseek":9,"grok":9,"gemini":10,"OxAlpha":9},"spread":1},{"id":"E22","title":"A regolith-hosted gold target","diff":"Moderate","sec":"Regolith, weathering and supergene processes","scores":{"kimi":8,"sonnet5":9,"gpt":9,"deepseek":9,"grok":8,"gemini":9,"OxAlpha":8},"spread":1},{"id":"F26","title":"Composites and detection limits","diff":"Easy","sec":"Geochemical sampling, analysis and interpretation","scores":{"kimi":9,"sonnet5":9,"gpt":9,"deepseek":8,"grok":9,"gemini":8,"OxAlpha":9},"spread":1},{"id":"G32","title":"Induced polarisation in conductive overburden","diff":"Moderate","sec":"Geophysical surveys: capability and limits","scores":{"kimi":9,"sonnet5":9,"gpt":8,"deepseek":9,"grok":9,"gemini":9,"OxAlpha":9},"spread":1},{"id":"H36","title":"From drill cuttings to a gold number","diff":"Easy","sec":"Drilling, sampling and data quality","scores":{"kimi":10,"sonnet5":9,"gpt":9,"deepseek":9,"grok":9,"gemini":9,"OxAlpha":10},"spread":1},{"id":"H38","title":"A decision not to log","diff":"Moderate","sec":"Drilling, sampling and data quality","scores":{"kimi":9,"sonnet5":10,"gpt":9,"deepseek":9,"grok":9,"gemini":9,"OxAlpha":9},"spread":1},{"id":"J46","title":"A classified estimate and an unclassified one","diff":"Easy","sec":"Integrated targeting, resource claims and uncertainty","scores":{"kimi":9,"sonnet5":9,"gpt":9,"deepseek":9,"grok":9,"gemini":8,"OxAlpha":9},"spread":1},{"id":"J48","title":"A conceptual target","diff":"Hard","sec":"Integrated targeting, resource claims and uncertainty","scores":{"kimi":10,"sonnet5":9,"gpt":10,"deepseek":9,"grok":10,"gemini":9,"OxAlpha":9},"spread":1},{"id":"G33","title":"A magnetic target list and a negative test","diff":"Moderate","sec":"Geophysical surveys: capability and limits","scores":{"kimi":10,"sonnet5":10,"gpt":10,"deepseek":10,"grok":10,"gemini":10,"OxAlpha":10},"spread":0},{"id":"G35","title":"How far a magnetic interpretation can be pushed","diff":"Expert","sec":"Geophysical surveys: capability and limits","scores":{"kimi":8,"sonnet5":8,"gpt":8,"deepseek":8,"grok":8,"gemini":8,"OxAlpha":8},"spread":0}],"usgs":[{"id":"C11","title":"The evidence that the Queen vein dams the ground water","diff":"Easy","sec":"Ground water: levels, barriers and hydrostatic compartments","scores":{"kimi":9,"sonnet5":9,"gpt":8,"deepseek":8,"grok":0,"gemini":9,"OxAlpha":9},"spread":9},{"id":"I41","title":"Why an absence at outcrop proves nothing","diff":"Easy","sec":"Weighing evidence and competing interpretations","scores":{"kimi":7,"sonnet5":0,"gpt":7,"deepseek":7,"grok":5,"gemini":7,"OxAlpha":7},"spread":7},{"id":"D20","title":"An attribution the Leadville authors decline to accept","diff":"Hard","sec":"Recognising origin: mineralogic and textural criteria","scores":{"kimi":9,"sonnet5":9,"gpt":10,"deepseek":7,"grok":5,"gemini":8,"OxAlpha":8},"spread":5},{"id":"B6","title":"What actually limits the depth of oxidation","diff":"Easy","sec":"Oxidation: depth, distribution and its controls","scores":{"kimi":8,"sonnet5":8,"gpt":9,"deepseek":5,"grok":5,"gemini":5,"OxAlpha":8},"spread":4},{"id":"C12","title":"What controls the permanent water level at Mogollon","diff":"Moderate","sec":"Ground water: levels, barriers and hydrostatic compartments","scores":{"kimi":9,"sonnet5":8,"gpt":8,"deepseek":5,"grok":6,"gemini":6,"OxAlpha":7},"spread":4},{"id":"D18","title":"Copper-pitch ore and what its position records","diff":"Moderate","sec":"Recognising origin: mineralogic and textural criteria","scores":{"kimi":10,"sonnet5":9,"gpt":10,"deepseek":9,"grok":6,"gemini":8,"OxAlpha":9},"spread":4},{"id":"E21","title":"Which metals enrich, and how well","diff":"Easy","sec":"Enrichment mechanisms and metal-specific behaviour","scores":{"kimi":8,"sonnet5":10,"gpt":8,"deepseek":7,"grok":7,"gemini":6,"OxAlpha":7},"spread":4},{"id":"E22","title":"Where the descending zinc went at Leadville","diff":"Moderate","sec":"Enrichment mechanisms and metal-specific behaviour","scores":{"kimi":10,"sonnet5":7,"gpt":6,"deepseek":6,"grok":7,"gemini":6,"OxAlpha":9},"spread":4},{"id":"J46","title":"Why a barren zone does not close a district","diff":"Easy","sec":"Economic inference: grade, depth and district prospects","scores":{"kimi":9,"sonnet5":9,"gpt":7,"deepseek":7,"grok":5,"gemini":5,"OxAlpha":8},"spread":4},{"id":"A2","title":"Why the supergene species outnumber the hypogene minerals","diff":"Moderate","sec":"The supergene-hypogene framework","scores":{"kimi":8,"sonnet5":8,"gpt":8,"deepseek":10,"grok":7,"gemini":8,"OxAlpha":8},"spread":3},{"id":"A4","title":"Where the primary-hypogene equivalence breaks down: galena","diff":"Moderate","sec":"The supergene-hypogene framework","scores":{"kimi":10,"sonnet5":10,"gpt":10,"deepseek":7,"grok":10,"gemini":7,"OxAlpha":10},"spread":3},{"id":"D16","title":"Graphic intergrowth as evidence of hypogene chalcocite","diff":"Easy","sec":"Recognising origin: mineralogic and textural criteria","scores":{"kimi":9,"sonnet5":9,"gpt":9,"deepseek":8,"grok":8,"gemini":7,"OxAlpha":10},"spread":3},{"id":"D17","title":"Coating relations and the strongest precipitant at Leadville","diff":"Moderate","sec":"Recognising origin: mineralogic and textural criteria","scores":{"kimi":9,"sonnet5":8,"gpt":8,"deepseek":6,"grok":6,"gemini":6,"OxAlpha":9},"spread":3},{"id":"E24","title":"Why the schist lodes enriched deeper than the limestone ores","diff":"Hard","sec":"Enrichment mechanisms and metal-specific behaviour","scores":{"kimi":9,"sonnet5":7,"gpt":8,"deepseek":6,"grok":6,"gemini":6,"OxAlpha":9},"spread":3},{"id":"F28","title":"Dating the main period of oxidation at Leadville","diff":"Hard","sec":"Physiographic history: erosion, glaciation and the age of alteration","scores":{"kimi":9,"sonnet5":8,"gpt":9,"deepseek":7,"grok":7,"gemini":6,"OxAlpha":8},"spread":3},{"id":"F29","title":"What a fineness comparison can and cannot show","diff":"Hard","sec":"Physiographic history: erosion, glaciation and the age of alteration","scores":{"kimi":7,"sonnet5":6,"gpt":8,"deepseek":5,"grok":7,"gemini":6,"OxAlpha":6},"spread":3},{"id":"F30","title":"Two districts, two verdicts on acquired grade","diff":"Expert","sec":"Physiographic history: erosion, glaciation and the age of alteration","scores":{"kimi":9,"sonnet5":9,"gpt":10,"deepseek":9,"grok":9,"gemini":7,"OxAlpha":7},"spread":3},{"id":"G33","title":"Inferring temperature and pressure from the ore itself","diff":"Moderate","sec":"Hypogene systems: source, paragenesis and conditions of formation","scores":{"kimi":9,"sonnet5":8,"gpt":9,"deepseek":8,"grok":8,"gemini":6,"OxAlpha":9},"spread":3},{"id":"H36","title":"Where the ore sits in a Mogollon vein","diff":"Easy","sec":"Structural and lithologic control of ore bodies","scores":{"kimi":7,"sonnet5":9,"gpt":7,"deepseek":7,"grok":6,"gemini":7,"OxAlpha":7},"spread":3},{"id":"H37","title":"Why only the White Caps limestone carries ore","diff":"Moderate","sec":"Structural and lithologic control of ore bodies","scores":{"kimi":8,"sonnet5":8,"gpt":5,"deepseek":5,"grok":5,"gemini":5,"OxAlpha":6},"spread":3},{"id":"H40","title":"The dam hypothesis and the assumption it forces","diff":"Hard","sec":"Structural and lithologic control of ore bodies","scores":{"kimi":9,"sonnet5":9,"gpt":9,"deepseek":8,"grok":7,"gemini":6,"OxAlpha":8},"spread":3},{"id":"J47","title":"What negative exploration at Poverty Flat establishes","diff":"Moderate","sec":"Economic inference: grade, depth and district prospects","scores":{"kimi":7,"sonnet5":9,"gpt":7,"deepseek":8,"grok":7,"gemini":6,"OxAlpha":8},"spread":3},{"id":"J49","title":"A grade decline and the confound beside it","diff":"Hard","sec":"Economic inference: grade, depth and district prospects","scores":{"kimi":9,"sonnet5":10,"gpt":7,"deepseek":8,"grok":8,"gemini":8,"OxAlpha":9},"spread":3},{"id":"A1","title":"What the hypogene-supergene distinction turns on","diff":"Easy","sec":"The supergene-hypogene framework","scores":{"kimi":8,"sonnet5":9,"gpt":8,"deepseek":7,"grok":7,"gemini":8,"OxAlpha":8},"spread":2},{"id":"A5","title":"How far the three-zone succession can be trusted","diff":"Hard","sec":"The supergene-hypogene framework","scores":{"kimi":9,"sonnet5":9,"gpt":8,"deepseek":7,"grok":8,"gemini":7,"OxAlpha":9},"spread":2},{"id":"B10","title":"Three oxidation depths that defy expectation","diff":"Expert","sec":"Oxidation: depth, distribution and its controls","scores":{"kimi":7,"sonnet5":8,"gpt":7,"deepseek":7,"grok":6,"gemini":6,"OxAlpha":7},"spread":2},{"id":"C13","title":"Hydrostatic basins and the Mikado step","diff":"Hard","sec":"Ground water: levels, barriers and hydrostatic compartments","scores":{"kimi":9,"sonnet5":10,"gpt":9,"deepseek":8,"grok":8,"gemini":8,"OxAlpha":9},"spread":2},{"id":"D19","title":"Short's two textural criteria in the Mogollon silver ores","diff":"Hard","sec":"Recognising origin: mineralogic and textural criteria","scores":{"kimi":9,"sonnet5":9,"gpt":9,"deepseek":7,"grok":7,"gemini":7,"OxAlpha":9},"spread":2},{"id":"E23","title":"Calcite as a chemical floor on gold enrichment","diff":"Moderate","sec":"Enrichment mechanisms and metal-specific behaviour","scores":{"kimi":7,"sonnet5":7,"gpt":5,"deepseek":5,"grok":5,"gemini":5,"OxAlpha":7},"spread":2},{"id":"E25","title":"Why oxidation yields a mineral richer in sulphur","diff":"Expert","sec":"Enrichment mechanisms and metal-specific behaviour","scores":{"kimi":10,"sonnet5":10,"gpt":10,"deepseek":10,"grok":8,"gemini":10,"OxAlpha":10},"spread":2},{"id":"F26","title":"Erosion outrunning oxidation in the Aravaipa region","diff":"Easy","sec":"Physiographic history: erosion, glaciation and the age of alteration","scores":{"kimi":9,"sonnet5":8,"gpt":7,"deepseek":8,"grok":8,"gemini":7,"OxAlpha":8},"spread":2},{"id":"F27","title":"Burial by the Gila conglomerate: suppression and preservation","diff":"Moderate","sec":"Physiographic history: erosion, glaciation and the age of alteration","scores":{"kimi":8,"sonnet5":8,"gpt":6,"deepseek":6,"grok":6,"gemini":6,"OxAlpha":6},"spread":2},{"id":"G31","title":"From batholith to lode: the sequence of steps","diff":"Easy","sec":"Hypogene systems: source, paragenesis and conditions of formation","scores":{"kimi":9,"sonnet5":9,"gpt":9,"deepseek":9,"grok":8,"gemini":7,"OxAlpha":9},"spread":2},{"id":"G34","title":"Assigning the Gold Hill schist ores to an epoch","diff":"Hard","sec":"Hypogene systems: source, paragenesis and conditions of formation","scores":{"kimi":9,"sonnet5":8,"gpt":8,"deepseek":8,"grok":7,"gemini":8,"OxAlpha":8},"spread":2},{"id":"H38","title":"What a Leadville blanket ore body requires","diff":"Moderate","sec":"Structural and lithologic control of ore bodies","scores":{"kimi":7,"sonnet5":9,"gpt":7,"deepseek":7,"grok":7,"gemini":7,"OxAlpha":9},"spread":2},{"id":"I42","title":"An assay ratio against a polished section","diff":"Moderate","sec":"Weighing evidence and competing interpretations","scores":{"kimi":9,"sonnet5":9,"gpt":9,"deepseek":9,"grok":7,"gemini":7,"OxAlpha":9},"spread":2},{"id":"I43","title":"Lindgren's rule against the White Caps evidence","diff":"Hard","sec":"Weighing evidence and competing interpretations","scores":{"kimi":10,"sonnet5":10,"gpt":10,"deepseek":8,"grok":9,"gemini":9,"OxAlpha":9},"spread":2},{"id":"J50","title":"East and west of the Queen: two cases kept apart","diff":"Expert","sec":"Economic inference: grade, depth and district prospects","scores":{"kimi":10,"sonnet5":10,"gpt":9,"deepseek":9,"grok":8,"gemini":8,"OxAlpha":10},"spread":2},{"id":"A3","title":"Why the degree of enrichment was a question of vital importance","diff":"Moderate","sec":"The supergene-hypogene framework","scores":{"kimi":9,"sonnet5":9,"gpt":9,"deepseek":9,"grok":8,"gemini":8,"OxAlpha":9},"spread":1},{"id":"B7","title":"Permeability, not depth, governs oxidation at Mogollon","diff":"Moderate","sec":"Oxidation: depth, distribution and its controls","scores":{"kimi":8,"sonnet5":8,"gpt":7,"deepseek":7,"grok":7,"gemini":7,"OxAlpha":8},"spread":1},{"id":"B8","title":"Black Weber shale: impervious and reducing","diff":"Moderate","sec":"Oxidation: depth, distribution and its controls","scores":{"kimi":9,"sonnet5":9,"gpt":9,"deepseek":8,"grok":9,"gemini":8,"OxAlpha":9},"spread":1},{"id":"C14","title":"The Manhattan water table and what can be inferred from it","diff":"Hard","sec":"Ground water: levels, barriers and hydrostatic compartments","scores":{"kimi":9,"sonnet5":8,"gpt":8,"deepseek":8,"grok":8,"gemini":8,"OxAlpha":9},"spread":1},{"id":"C15","title":"The evidence destroyed by the mines themselves","diff":"Expert","sec":"Ground water: levels, barriers and hydrostatic compartments","scores":{"kimi":10,"sonnet5":10,"gpt":9,"deepseek":10,"grok":10,"gemini":10,"OxAlpha":10},"spread":1},{"id":"G32","title":"The compositional argument for introduced material","diff":"Moderate","sec":"Hypogene systems: source, paragenesis and conditions of formation","scores":{"kimi":8,"sonnet5":8,"gpt":8,"deepseek":8,"grok":7,"gemini":8,"OxAlpha":8},"spread":1},{"id":"G35","title":"Open fissures at Mogollon, and a test for upward transport","diff":"Hard","sec":"Hypogene systems: source, paragenesis and conditions of formation","scores":{"kimi":10,"sonnet5":10,"gpt":10,"deepseek":9,"grok":9,"gemini":10,"OxAlpha":10},"spread":1},{"id":"I44","title":"Two explanations for a narrow vertical range","diff":"Hard","sec":"Weighing evidence and competing interpretations","scores":{"kimi":9,"sonnet5":9,"gpt":9,"deepseek":8,"grok":9,"gemini":8,"OxAlpha":9},"spread":1},{"id":"I45","title":"A verdict that concedes its strongest objection","diff":"Expert","sec":"Weighing evidence and competing interpretations","scores":{"kimi":10,"sonnet5":10,"gpt":10,"deepseek":9,"grok":10,"gemini":10,"OxAlpha":10},"spread":1},{"id":"J48","title":"Two rules for reading enrichment at depth","diff":"Hard","sec":"Economic inference: grade, depth and district prospects","scores":{"kimi":10,"sonnet5":10,"gpt":10,"deepseek":9,"grok":9,"gemini":9,"OxAlpha":10},"spread":1},{"id":"B9","title":"Topographic relief demoted at Leadville","diff":"Hard","sec":"Oxidation: depth, distribution and its controls","scores":{"kimi":8,"sonnet5":8,"gpt":8,"deepseek":8,"grok":8,"gemini":8,"OxAlpha":8},"spread":0},{"id":"H39","title":"Scott's wall-rock control and Ferguson's rejection of it","diff":"Hard","sec":"Structural and lithologic control of ore bodies","scores":{"kimi":8,"sonnet5":8,"gpt":8,"deepseek":8,"grok":8,"gemini":8,"OxAlpha":8},"spread":0}]},"difficulty":{"technical":{"Easy":{"n":10,"kimi":8.6,"sonnet5":8.7,"gpt":8.2,"deepseek":7.6,"grok":7.6,"gemini":7.7,"OxAlpha":9},"Moderate":{"n":17,"kimi":8.47,"sonnet5":8.47,"gpt":8.29,"deepseek":7.71,"grok":7.59,"gemini":7.82,"OxAlpha":8.59},"Hard":{"n":17,"kimi":8.88,"sonnet5":8.35,"gpt":8.65,"deepseek":6.94,"grok":7.76,"gemini":7.65,"OxAlpha":7.47},"Expert":{"n":6,"kimi":8.33,"sonnet5":8.33,"gpt":8,"deepseek":7,"grok":7.33,"gemini":6.83,"OxAlpha":8}},"wamex":{"Easy":{"n":10,"kimi":8.8,"sonnet5":7.9,"gpt":8.4,"deepseek":8.5,"grok":8.2,"gemini":7.7,"OxAlpha":8.2},"Moderate":{"n":17,"kimi":9.24,"sonnet5":9.35,"gpt":9.12,"deepseek":8.59,"grok":8.47,"gemini":8.35,"OxAlpha":9.24},"Hard":{"n":17,"kimi":9.18,"sonnet5":9.12,"gpt":9,"deepseek":8.35,"grok":8.47,"gemini":7.24,"OxAlpha":8.41},"Expert":{"n":6,"kimi":9,"sonnet5":8.33,"gpt":8.67,"deepseek":8.33,"grok":8.5,"gemini":7.67,"OxAlpha":8.67}},"usgs":{"Easy":{"n":10,"kimi":8.3,"sonnet5":8,"gpt":7.9,"deepseek":7.3,"grok":5.9,"gemini":6.8,"OxAlpha":8.1},"Moderate":{"n":17,"kimi":8.53,"sonnet5":8.35,"gpt":7.71,"deepseek":7.24,"grok":6.94,"gemini":6.71,"OxAlpha":8.24},"Hard":{"n":17,"kimi":8.94,"sonnet5":8.71,"gpt":8.71,"deepseek":7.59,"grok":7.65,"gemini":7.65,"OxAlpha":8.59},"Expert":{"n":6,"kimi":9.33,"sonnet5":9.5,"gpt":9.17,"deepseek":9,"grok":8.5,"gemini":8.5,"OxAlpha":9}}},"pareto":[{"key":"kimi","score":8.81,"gen":44.81,"judge":4.88,"cost":49.69,"freeGen":false,"frontier":true},{"key":"sonnet5","score":8.62,"gen":26.73,"judge":5.55,"cost":32.29,"freeGen":false,"frontier":true},{"key":"gpt","score":8.5,"gen":24.41,"judge":4.41,"cost":28.82,"freeGen":false,"frontier":true},{"key":"deepseek","score":7.79,"gen":10.58,"judge":4.83,"cost":15.41,"freeGen":false,"frontier":false},{"key":"grok","score":7.73,"gen":33.69,"judge":4.1,"cost":37.79,"freeGen":false,"frontier":false},{"key":"gemini","score":7.55,"gen":50.73,"judge":4.24,"cost":54.97,"freeGen":false,"frontier":false},{"key":"OxAlpha","score":8.44,"gen":0.0,"judge":5.37,"cost":5.37,"freeGen":true,"frontier":true}],"coststrip":{"kimi":[0.044,0.048,0.048,0.054,0.054,0.058,0.059,0.06,0.061,0.063,0.065,0.073,0.074,0.075,0.076,0.077,0.079,0.08,0.08,0.081,0.083,0.087,0.088,0.09,0.091,0.091,0.092,0.092,0.092,0.094,0.096,0.097,0.097,0.098,0.103,0.106,0.107,0.109,0.11,0.111,0.111,0.114,0.114,0.115,0.116,0.116,0.117,0.117,0.119,0.12,0.12,0.121,0.123,0.131,0.132,0.133,0.134,0.137,0.137,0.137,0.14,0.147,0.159,0.159,0.16,0.162,0.165,0.168,0.172,0.172,0.176,0.176,0.177,0.179,0.183,0.184,0.188,0.19,0.194,0.195,0.195,0.198,0.198,0.201,0.202,0.207,0.208,0.208,0.209,0.21,0.211,0.212,0.22,0.221,0.223,0.228,0.235,0.249,0.25,0.251,0.261,0.261,0.266,0.269,0.277,0.281,0.285,0.307,0.308,0.316,0.326,0.344,0.357,0.369,0.386,0.416,0.435,0.436,0.451,0.458,0.459,0.471,0.485,0.499,0.513,0.524,0.554,0.556,0.577,0.618,0.629,0.632,0.643,0.668,0.689,0.709,0.732,0.752,0.803,0.841,0.864,0.9,0.981,1.071,1.273,1.291,1.319,1.408,1.493,1.557],"sonnet5":[0.024,0.026,0.027,0.029,0.03,0.031,0.032,0.033,0.033,0.034,0.035,0.036,0.037,0.04,0.04,0.041,0.042,0.044,0.044,0.046,0.046,0.049,0.051,0.052,0.052,0.053,0.053,0.056,0.056,0.057,0.058,0.06,0.061,0.062,0.062,0.063,0.064,0.066,0.067,0.068,0.069,0.07,0.073,0.073,0.08,0.082,0.083,0.084,0.084,0.086,0.087,0.087,0.087,0.087,0.087,0.089,0.091,0.092,0.097,0.098,0.098,0.099,0.101,0.102,0.104,0.104,0.107,0.107,0.108,0.108,0.109,0.11,0.113,0.115,0.116,0.116,0.116,0.12,0.123,0.124,0.13,0.133,0.135,0.137,0.137,0.14,0.14,0.141,0.144,0.147,0.147,0.149,0.149,0.15,0.156,0.158,0.159,0.16,0.16,0.162,0.165,0.169,0.173,0.174,0.177,0.183,0.19,0.193,0.193,0.198,0.198,0.211,0.211,0.213,0.217,0.223,0.224,0.23,0.233,0.235,0.238,0.241,0.249,0.256,0.257,0.261,0.265,0.271,0.277,0.285,0.291,0.297,0.316,0.318,0.322,0.323,0.338,0.382,0.389,0.475,0.557,0.601,0.62,0.623,0.668,0.676,0.785,1.072,1.142,1.244],"gpt":[0.037,0.038,0.042,0.044,0.046,0.047,0.048,0.049,0.05,0.051,0.053,0.053,0.056,0.059,0.063,0.063,0.064,0.064,0.064,0.065,0.065,0.065,0.066,0.066,0.066,0.067,0.069,0.07,0.072,0.074,0.078,0.079,0.079,0.08,0.08,0.081,0.082,0.083,0.084,0.084,0.084,0.085,0.087,0.088,0.088,0.088,0.09,0.091,0.092,0.093,0.094,0.095,0.096,0.097,0.098,0.101,0.101,0.102,0.103,0.104,0.105,0.105,0.109,0.112,0.114,0.114,0.114,0.115,0.115,0.117,0.12,0.122,0.123,0.125,0.126,0.127,0.129,0.129,0.129,0.13,0.131,0.136,0.136,0.136,0.137,0.139,0.142,0.144,0.147,0.147,0.147,0.152,0.153,0.153,0.158,0.163,0.166,0.168,0.168,0.171,0.179,0.183,0.184,0.185,0.186,0.187,0.19,0.195,0.196,0.199,0.205,0.209,0.216,0.217,0.222,0.222,0.223,0.225,0.227,0.227,0.23,0.237,0.24,0.243,0.248,0.25,0.258,0.267,0.267,0.273,0.302,0.304,0.314,0.324,0.337,0.339,0.339,0.339,0.351,0.361,0.365,0.368,0.378,0.383,0.464,0.473,0.504,0.521,0.533,0.726],"deepseek":[0.003,0.005,0.005,0.006,0.006,0.006,0.007,0.008,0.008,0.008,0.008,0.008,0.009,0.009,0.009,0.009,0.009,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.011,0.011,0.011,0.011,0.011,0.011,0.012,0.012,0.012,0.013,0.013,0.013,0.013,0.014,0.014,0.014,0.014,0.015,0.015,0.015,0.015,0.015,0.015,0.015,0.016,0.017,0.017,0.018,0.018,0.019,0.019,0.02,0.02,0.02,0.021,0.021,0.021,0.021,0.022,0.022,0.022,0.023,0.023,0.023,0.023,0.025,0.025,0.025,0.025,0.025,0.026,0.027,0.028,0.028,0.028,0.028,0.029,0.029,0.029,0.029,0.03,0.03,0.032,0.035,0.035,0.035,0.038,0.041,0.044,0.046,0.054,0.054,0.059,0.059,0.061,0.062,0.065,0.065,0.066,0.068,0.07,0.073,0.077,0.078,0.079,0.081,0.081,0.081,0.082,0.083,0.083,0.086,0.091,0.098,0.104,0.126,0.131,0.133,0.133,0.133,0.149,0.16,0.165,0.169,0.173,0.198,0.2,0.216,0.23,0.273,0.284,0.335,0.345,0.357,0.389,0.418,0.423,0.465,0.557,0.786],"grok":[0.023,0.023,0.033,0.037,0.039,0.04,0.041,0.041,0.041,0.042,0.042,0.043,0.044,0.049,0.05,0.051,0.051,0.051,0.053,0.053,0.054,0.055,0.055,0.056,0.057,0.057,0.057,0.058,0.06,0.063,0.064,0.064,0.064,0.065,0.065,0.068,0.069,0.07,0.07,0.074,0.075,0.079,0.08,0.081,0.082,0.083,0.084,0.088,0.091,0.093,0.093,0.095,0.096,0.097,0.097,0.098,0.099,0.099,0.101,0.102,0.102,0.103,0.103,0.104,0.104,0.105,0.106,0.106,0.108,0.108,0.109,0.109,0.113,0.122,0.124,0.126,0.128,0.128,0.129,0.13,0.131,0.143,0.144,0.144,0.148,0.15,0.151,0.153,0.154,0.154,0.161,0.165,0.165,0.173,0.175,0.183,0.185,0.186,0.194,0.196,0.201,0.207,0.207,0.21,0.21,0.211,0.219,0.222,0.234,0.244,0.249,0.249,0.252,0.281,0.287,0.305,0.312,0.333,0.334,0.336,0.338,0.339,0.345,0.354,0.356,0.361,0.365,0.365,0.374,0.381,0.384,0.397,0.417,0.428,0.43,0.469,0.539,0.546,0.628,0.732,0.743,0.803,0.838,0.842,0.976,1.067,1.084,1.277,1.397,1.584],"gemini":[0.041,0.048,0.048,0.049,0.052,0.057,0.059,0.063,0.064,0.065,0.065,0.066,0.067,0.069,0.073,0.073,0.075,0.078,0.079,0.082,0.082,0.082,0.083,0.087,0.089,0.089,0.091,0.093,0.095,0.095,0.097,0.097,0.097,0.098,0.098,0.099,0.099,0.102,0.105,0.106,0.106,0.108,0.109,0.11,0.114,0.115,0.116,0.117,0.119,0.121,0.125,0.132,0.132,0.133,0.134,0.137,0.137,0.138,0.139,0.141,0.142,0.142,0.144,0.149,0.154,0.157,0.16,0.163,0.164,0.186,0.186,0.189,0.189,0.191,0.195,0.197,0.197,0.197,0.198,0.204,0.204,0.206,0.206,0.207,0.207,0.21,0.211,0.212,0.225,0.228,0.231,0.232,0.235,0.238,0.241,0.243,0.245,0.257,0.267,0.27,0.276,0.279,0.279,0.29,0.301,0.305,0.306,0.307,0.315,0.32,0.331,0.335,0.341,0.346,0.357,0.358,0.362,0.365,0.403,0.405,0.467,0.469,0.478,0.509,0.513,0.539,0.542,0.55,0.557,0.567,0.591,0.595,0.612,0.634,0.653,0.663,0.781,0.907,0.965,1.16,1.199,1.256,1.327,1.501,1.563,1.68,1.79,1.942,2.158,3.263],"OxAlpha":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]},"effort":[{"key":"kimi","calls":12.1,"latency":155,"score":8.81,"cost":49.69},{"key":"sonnet5","calls":9.9,"latency":82,"score":8.62,"cost":32.29},{"key":"gpt","calls":12.9,"latency":43,"score":8.5,"cost":28.82},{"key":"deepseek","calls":12.2,"latency":75,"score":7.79,"cost":15.41},{"key":"grok","calls":19.0,"latency":42,"score":7.73,"cost":37.79},{"key":"gemini","calls":9.6,"latency":78,"score":7.55,"cost":54.97},{"key":"OxAlpha","calls":10.7,"latency":92,"score":8.44,"cost":5.37}],"toolmix":{"kimi":{"read":40.3,"grep":27.4,"bash":30.7,"glob":1.5,"task":0.0,"webfetch":0.0},"sonnet5":{"read":42.1,"grep":1.7,"bash":54.9,"glob":0.7,"task":0.5,"webfetch":0.0},"gpt":{"read":56.9,"grep":31.5,"bash":0.4,"glob":10.0,"task":0.3,"webfetch":0.6},"deepseek":{"read":56.3,"grep":24.3,"bash":13.8,"glob":2.3,"task":3.2,"webfetch":0.0},"grok":{"read":56.6,"grep":31.5,"bash":0.2,"glob":11.6,"task":0.0,"webfetch":0.1},"gemini":{"read":11.3,"grep":20.7,"bash":67.4,"glob":0.5,"task":0.0,"webfetch":0.0},"OxAlpha":{"read":39.3,"grep":28.8,"bash":27.2,"glob":4.7,"task":0.0,"webfetch":0.0}},"tools":["read","grep","bash","glob","task","webfetch"],"resolution":{"technical":{"range":1.28,"mdd":0.45,"steps":2.8,"dead":2,"strong":18},"wamex":{"range":1.34,"mdd":0.27,"steps":5.0,"dead":2,"strong":16},"usgs":{"range":1.56,"mdd":0.33,"steps":4.7,"dead":2,"strong":23}},"stats":{"models":7,"sites":3,"questions":150,"answers":1050,"spend":293.12}}</script>
+<script>
+(function () {
+  "use strict";
+  const DATA = JSON.parse(document.getElementById("data").textContent);
+  const M = DATA.models, SITES = DATA.sites;
+  const KEYS = M.map(m => m.key);
+  const NAME = Object.fromEntries(M.map(m => [m.key, m.name]));
+  const CIDX = Object.fromEntries(M.map((m, i) => [m.key, i]));
+  const SVGNS = "http://www.w3.org/2000/svg";
+  const fmt$ = v => "$" + (v >= 100 ? v.toFixed(0) : v >= 1 ? v.toFixed(2) : v.toFixed(3));
+
+  function el(tag, attrs, parent, text) {
+    const n = document.createElementNS(SVGNS, tag);
+    for (const k in attrs) n.setAttribute(k, attrs[k]);
+    if (text != null) n.textContent = text;
+    if (parent) parent.appendChild(n);
+    return n;
+  }
+  function svgIn(id, w, h) {
+    const host = document.getElementById(id);
+    const s = el("svg", { viewBox: `0 0 ${w} ${h}`, width: "100%", role: "img" });
+    s.style.minWidth = Math.min(w, 640) + "px";
+    host.appendChild(s);
+    return s;
+  }
+
+  /* tooltip */
+  const tip = document.getElementById("tip");
+  function showTip(ev, html) {
+    tip.innerHTML = html; tip.style.display = "block";
+    const pad = 14, vw = window.innerWidth;
+    let x = ev.clientX + pad, y = ev.clientY + pad;
+    const r = tip.getBoundingClientRect();
+    if (x + r.width > vw - 8) x = ev.clientX - r.width - pad;
+    if (y + r.height > window.innerHeight - 8) y = ev.clientY - r.height - pad;
+    tip.style.left = x + "px"; tip.style.top = y + "px";
+  }
+  function hideTip() { tip.style.display = "none"; }
+  function hover(node, html) {
+    node.addEventListener("mousemove", ev => showTip(ev, html));
+    node.addEventListener("mouseleave", hideTip);
+  }
+
+  /* ---------- stat strip + legend ---------- */
+  (function () {
+    const s = DATA.stats;
+    const items = [
+      [s.models, "models"], [s.sites, "districts"], [s.questions, "questions"],
+      [s.answers, "scored answers"],
+      ["$" + s.spend.toFixed(0), "total recorded spend"],
+    ];
+    document.getElementById("stats").innerHTML = items
+      .map(([b, l]) => `<div class="stat"><b>${b}</b><span>${l}</span></div>`).join("");
+    document.getElementById("legend").innerHTML = M
+      .map((m, i) => `<span class="chip"><i style="background:var(--m${i})"></i>${m.name}</span>`)
+      .join("");
+    const words = {5:"Five",6:"Six",7:"Seven",8:"Eight",9:"Nine",10:"Ten"};
+    document.getElementById("nmodels").textContent = words[M.length] || String(M.length);
+  })();
+
+  /* ---------- 01 tier chart ---------- */
+  (function () {
+    const W = 960, rowH = 46, padL = 190, padR = 130, padT = 26, padB = 8;
+    const H = padT + KEYS.length * rowH + padB;
+    const lo = 7.0, hi = 9.3;
+    const x = v => padL + (v - lo) / (hi - lo) * (W - padL - padR);
+    const svg = svgIn("tier", W, H);
+    for (let v = 7; v <= 9; v += 0.5) {
+      el("line", { x1: x(v), x2: x(v), y1: padT - 6, y2: H - padB, class: "gline" }, svg);
+      el("text", { x: x(v), y: padT - 12, "text-anchor": "middle", class: "tick" }, svg, v.toFixed(1));
+    }
+    DATA.leaderboard.forEach((r, i) => {
+      const y = padT + i * rowH + rowH / 2;
+      el("text", { x: padL - 14, y: y + 4, "text-anchor": "end", class: "dlab" }, svg, r.name);
+      el("line", { x1: x(r.ci[0]), x2: x(r.ci[1]), y1: y, y2: y,
+                   class: "s" + CIDX[r.key], "stroke-width": 3, "stroke-linecap": "round",
+                   opacity: .45 }, svg);
+      const dot = el("circle", { cx: x(r.mean), cy: y, r: 6.5, class: "f" + CIDX[r.key] }, svg);
+      el("text", { x: x(r.ci[1]) + 10, y: y + 4, class: "vlab" }, svg,
+        r.mean.toFixed(2) + "  ·  rank " + r.rank);
+      hover(dot, `<div class="t1">${r.name}</div>
+        <div>mean ${r.mean.toFixed(2)} / 10 &nbsp; (95% CI ${r.ci[0].toFixed(2)}–${r.ci[1].toFixed(2)})</div>
+        <div class="t2">total ${r.total} / 1500 · rank range ${r.rank} · gate failures ${r.gateFails}</div>`);
+    });
+    /* draw the tier boundary after the last model whose gap to the next is
+       significant — computed, so a new model moves the line, not the author */
+    DATA.gaps.forEach((gp, i) => {
+      if (!gp.sig) return;
+      const tierY = padT + (i + 0.5) * rowH + rowH / 2;
+      el("line", { x1: padL - 170, x2: W - 16, y1: tierY, y2: tierY,
+                   stroke: "var(--rule)", "stroke-dasharray": "3 5" }, svg);
+    });
+
+    const g = DATA.gaps.map(gp =>
+      `${NAME[gp.a].split(" ")[0]} → ${NAME[gp.b].split(" ")[0]} ` +
+      `${gp.diff >= 0 ? "+" : ""}${gp.diff.toFixed(2)} (p=${gp.p}${gp.sig ? ", separated" : ", tied"})`);
+    document.getElementById("gapnote").innerHTML =
+      "<b>Adjacent gaps, paired permutation test on all 150 questions:</b> " + g.join(" · ") +
+      ". Only the tier boundary separates.";
+  })();
+
+  /* ---------- 01b per-site small multiples ---------- */
+  (function () {
+    const PW = 320, padL = 30, padR = 60, padT = 30, rowH = 34;
+    const PH = padT + KEYS.length * rowH + 26;
+    const W = PW * 3;
+    const svg = svgIn("tiersmall", W, PH);
+    const lo = 7.0, hi = 9.4;
+    SITES.forEach((site, si) => {
+      const ox = si * PW;
+      const x = v => ox + padL + (v - lo) / (hi - lo) * (PW - padL - padR);
+      el("text", { x: ox + padL, y: 16, class: "dlab", "font-size": 13 }, svg, site.label);
+      [7, 8, 9].forEach(v => {
+        el("line", { x1: x(v), x2: x(v), y1: padT, y2: padT + KEYS.length * rowH, class: "gline" }, svg);
+        el("text", { x: x(v), y: padT + KEYS.length * rowH + 14, "text-anchor": "middle", class: "tick" }, svg, v);
+      });
+      DATA.leaderboard.forEach((r, i) => {
+        const ps = r.perSite[site.key];
+        const y = padT + i * rowH + rowH / 2;
+        el("line", { x1: x(ps.ci[0]), x2: x(ps.ci[1]), y1: y, y2: y,
+                     class: "s" + CIDX[r.key], "stroke-width": 2.5, "stroke-linecap": "round",
+                     opacity: .45 }, svg);
+        const d = el("circle", { cx: x(ps.mean), cy: y, r: 4.5, class: "f" + CIDX[r.key] }, svg);
+        hover(d, `<div class="t1">${r.name} — ${site.label}</div>
+          <div>mean ${ps.mean.toFixed(2)} · total ${ps.total} / 500</div>`);
+      });
+    });
+  })();
+
+  /* ---------- 01c leaderboard table ---------- */
+  (function () {
+    let h = `<table><thead><tr><th>Rank</th><th>Model</th>`;
+    SITES.forEach(s => h += `<th class="num">${s.label}</th>`);
+    h += `<th class="num">Total /1500</th><th class="num">Mean /10</th><th class="num">95% CI</th></tr></thead><tbody>`;
+    DATA.leaderboard.forEach(r => {
+      h += `<tr><td class="mono">${r.rank}</td>
+        <td><span class="chip"><i style="background:var(--m${CIDX[r.key]})"></i>${r.name}</span></td>`;
+      SITES.forEach(s => h += `<td class="num">${r.perSite[s.key].mean.toFixed(2)}</td>`);
+      h += `<td class="num">${r.total}</td><td class="num">${r.mean.toFixed(2)}</td>
+        <td class="num">${r.ci[0].toFixed(2)}–${r.ci[1].toFixed(2)}</td></tr>`;
+    });
+    document.getElementById("lbtable").innerHTML = h + "</tbody></table>";
+  })();
+
+  /* ---------- 02 slopegraph ---------- */
+  (function () {
+    const W = 960, H = 400, padL = 170, padR = 170, padT = 34, padB = 30;
+    const svg = svgIn("slope", W, H);
+    const xs = SITES.map((_, i) => padL + i * (W - padL - padR) / (SITES.length - 1));
+    const lo = 7.0, hi = 9.3;
+    const y = v => padT + (hi - v) / (hi - lo) * (H - padT - padB);
+    SITES.forEach((s, i) => {
+      el("line", { x1: xs[i], x2: xs[i], y1: padT - 4, y2: H - padB, class: "gline" }, svg);
+      el("text", { x: xs[i], y: H - 8, "text-anchor": "middle", class: "tick",
+                   "font-size": 12 }, svg, s.label);
+    });
+    /* label collision spacing */
+    function spread(items, min) {
+      items.sort((a, b) => a.y - b.y);
+      for (let i = 1; i < items.length; i++)
+        if (items[i].y - items[i - 1].y < min) items[i].y = items[i - 1].y + min;
+      return items;
+    }
+    const left = [], right = [];
+    DATA.leaderboard.forEach(r => {
+      const pts = SITES.map((s, i) => [xs[i], y(r.perSite[s.key].mean)]);
+      const path = el("polyline", {
+        points: pts.map(p => p.join(",")).join(" "), fill: "none",
+        class: "s" + CIDX[r.key], "stroke-width": 2.5, opacity: .85 }, svg);
+      pts.forEach((p, i) => {
+        const d = el("circle", { cx: p[0], cy: p[1], r: 4.5, class: "f" + CIDX[r.key] }, svg);
+        hover(d, `<div class="t1">${r.name} — ${SITES[i].label}</div>
+          <div>mean ${r.perSite[SITES[i].key].mean.toFixed(2)}</div>`);
+      });
+      left.push({ key: r.key, name: r.name, y: pts[0][1], v: r.perSite[SITES[0].key].mean });
+      right.push({ key: r.key, name: r.name, y: pts[2][1], v: r.perSite[SITES[2].key].mean });
+      hover(path, `<div class="t1">${r.name}</div><div class="t2">` +
+        SITES.map(s => `${s.label} ${r.perSite[s.key].mean.toFixed(2)}`).join(" · ") + `</div>`);
+    });
+    spread(left, 16).forEach(it => {
+      el("text", { x: xs[0] - 12, y: it.y + 4, "text-anchor": "end", class: "dlab",
+                   "font-size": 12 }, svg, it.name);
+    });
+    spread(right, 16).forEach(it => {
+      el("text", { x: xs[2] + 12, y: it.y + 4, class: "dlab", "font-size": 12 }, svg,
+        it.v.toFixed(2) + "  " + it.name.split(" ")[0]);
+    });
+  })();
+
+  /* ---------- 03 pareto ---------- */
+  (function () {
+    const W = 960, H = 430, padL = 64, padR = 40, padT = 40, padB = 46;
+    const svg = svgIn("pareto", W, H);
+    const P = DATA.pareto;
+    const free = P.filter(p => p.freeGen);
+    if (free.length) {
+      const host = document.getElementById("pareto").parentElement;
+      const n = document.createElement("p"); n.className = "note";
+      n.innerHTML = "<b>" + free.map(p => NAME[p.key]).join(", ") +
+        ":</b> generation is billed $0 on the broker (free tier), so its position " +
+        "here is judging cost alone — a real price today, with the usual free-tier " +
+        "caveats on rate limits and longevity.";
+      host.appendChild(n);
+    }
+    const cmin = Math.min(...P.map(p => p.cost)) * 0.8;
+    const cmax = Math.max(...P.map(p => p.cost)) * 1.25;
+    const x = v => padL + (Math.log(v) - Math.log(cmin)) / (Math.log(cmax) - Math.log(cmin)) * (W - padL - padR);
+    const lo = 7.3, hi = 9.1;
+    const y = v => padT + (hi - v) / (hi - lo) * (H - padT - padB);
+    /* subtle wash toward better corner */
+    const defs = el("defs", {}, svg);
+    const gr = el("linearGradient", { id: "wash", x1: 0, y1: 0, x2: 1, y2: 1 }, defs);
+    el("stop", { offset: "0%", "stop-color": "var(--wash)" }, gr);
+    el("stop", { offset: "55%", "stop-color": "transparent" }, gr);
+    el("rect", { x: padL, y: padT, width: W - padL - padR, height: H - padT - padB,
+                 fill: "url(#wash)" }, svg);
+    el("text", { x: padL + 10, y: padT + 18, class: "tick", "font-size": 11 }, svg,
+      "↖ better — higher score, lower cost");
+    [10, 20, 40, 80].filter(v => v > cmin && v < cmax).forEach(v => {
+      el("line", { x1: x(v), x2: x(v), y1: padT, y2: H - padB, class: "gline" }, svg);
+      el("text", { x: x(v), y: H - padB + 16, "text-anchor": "middle", class: "tick" }, svg, "$" + v);
+    });
+    for (let v = 7.5; v <= 9; v += 0.5) {
+      el("line", { x1: padL, x2: W - padR, y1: y(v), y2: y(v), class: "gline" }, svg);
+      el("text", { x: padL - 8, y: y(v) + 4, "text-anchor": "end", class: "tick" }, svg, v.toFixed(1));
+    }
+    el("text", { x: (padL + W - padR) / 2, y: H - 6, "text-anchor": "middle", class: "tick" }, svg,
+      "cost to run 150 questions (USD, log scale)");
+    /* frontier: staircase through frontier points by ascending cost */
+    const fr = P.filter(p => p.frontier).sort((a, b) => a.cost - b.cost);
+    let dpath = "";
+    fr.forEach((p, i) => {
+      if (i === 0) dpath = `M ${x(p.cost)} ${y(p.score)}`;
+      else dpath += ` L ${x(p.cost)} ${y(fr[i - 1].score)} L ${x(p.cost)} ${y(p.score)}`;
+    });
+    el("path", { d: dpath, fill: "none", stroke: "var(--ink2)",
+                 "stroke-dasharray": "2 5", "stroke-width": 1.5 }, svg);
+    el("text", { x: x(fr[0].cost) + 6, y: y(fr[0].score) + 22, class: "tick" }, svg, "Pareto frontier");
+    P.forEach(p => {
+      const dim = p.frontier ? 1 : 0.38;
+      const d = el("circle", { cx: x(p.cost), cy: y(p.score), r: 8,
+                               class: "f" + CIDX[p.key], opacity: dim,
+                               stroke: "var(--surface)", "stroke-width": 2 }, svg);
+      el("text", { x: x(p.cost), y: y(p.score) - 14, "text-anchor": "middle",
+                   class: "dlab", opacity: p.frontier ? 1 : 0.55 }, svg, NAME[p.key]);
+      hover(d, `<div class="t1">${NAME[p.key]}</div>
+        <div>score ${p.score.toFixed(2)} · cost ${fmt$(p.cost)}</div>
+        <div class="t2">generation ${fmt$(p.gen)} + judging ${fmt$(p.judge)} ·
+        ${p.frontier ? "on the frontier" : "dominated"}</div>`);
+    });
+  })();
+
+  /* ---------- 03b cost per question bars ---------- */
+  (function () {
+    const W = 960, rowH = 34, padL = 190, padR = 165, padT = 8;
+    const P = [...DATA.pareto].sort((a, b) => a.cost - b.cost);
+    const H = padT + P.length * rowH + 6;
+    const svg = svgIn("cpq", W, H);
+    const max = Math.max(...P.map(p => p.cost / 150));
+    const x = v => padL + v / max * (W - padL - padR);
+    P.forEach((p, i) => {
+      const y = padT + i * rowH + rowH / 2;
+      const v = p.cost / 150;
+      el("text", { x: padL - 14, y: y + 4, "text-anchor": "end", class: "dlab" }, svg, NAME[p.key]);
+      const b = el("rect", { x: padL, y: y - 9, width: Math.max(2, x(v) - padL), height: 18,
+                             rx: 4, class: "f" + CIDX[p.key] }, svg);
+      el("text", { x: x(v) + 8, y: y + 4, class: "vlab" }, svg, fmt$(v) + " / question");
+      hover(b, `<div class="t1">${NAME[p.key]}</div><div>${fmt$(v)} per question · ${fmt$(p.cost)} total</div>`);
+    });
+  })();
+
+  /* ---------- 04 heatmaps ---------- */
+  (function () {
+    const tabs = document.getElementById("heattabs");
+    const host = document.getElementById("heat");
+    const note = document.getElementById("heatnote");
+    /* Observed nonzero scores run 5–10; stretch the ramp over that band so the
+       grid shows variation instead of uniform dark. 0 stays the gate-fail mark. */
+    function heatClass(v) {
+      if (v === 0) return null;
+      const idx = Math.min(10, Math.max(1, Math.round((v - 5) / 5 * 9) + 1));
+      return "var(--h" + idx + ")";
+    }
+    function render(sk) {
+      host.innerHTML = "";
+      const rows = DATA.questions[sk];
+      const W = 960, padL = 64, cellH = 15, gap = 2, padT = 26;
+      const cellW = Math.floor((W - padL - 156) / KEYS.length);
+      const spreadX = padL + KEYS.length * cellW + 24;
+      const H = padT + rows.length * cellH + 8;
+      const svg = svgIn("heat", W, H);
+      KEYS.forEach((m, j) => {
+        el("text", { x: padL + j * cellW + (cellW - gap) / 2, y: 14, "text-anchor": "middle",
+                     class: "tick", "font-size": 11 }, svg, NAME[m].split(" ")[0]);
+      });
+      el("text", { x: spreadX, y: 14, class: "tick", "font-size": 11 }, svg, "spread");
+      rows.forEach((r, i) => {
+        const y = padT + i * cellH;
+        el("text", { x: padL - 8, y: y + cellH - 4, "text-anchor": "end", class: "tick" }, svg, r.id);
+        KEYS.forEach((m, j) => {
+          const v = r.scores[m];
+          const fill = heatClass(v);
+          const cx = padL + j * cellW;
+          const cell = el("rect", { x: cx, y: y, width: cellW - gap, height: cellH - gap,
+                                    rx: 2, fill: fill || "none",
+                                    stroke: fill ? "none" : "var(--crit)" }, svg);
+          if (v === 0) {
+            el("text", { x: cx + (cellW - gap) / 2, y: y + cellH - 4, "text-anchor": "middle",
+                         "font-size": 10, "font-weight": 700, fill: "var(--crit)" }, svg, "×");
+          }
+          hover(cell, `<div class="t1">${r.id} — ${r.title}</div>
+            <div class="t2">${r.diff} · ${r.sec}</div>
+            <div style="margin-top:4px">${NAME[m]}: <b>${v}</b>${v === 0 ? " (gate failed)" : ""}</div>
+            <div class="t2">` + KEYS.map(k => `${NAME[k].split(" ")[0]} ${r.scores[k]}`).join(" · ") + `</div>`);
+        });
+        const bw = r.spread / 10 * 90;
+        el("rect", { x: spreadX, y: y + 2, width: Math.max(1, bw), height: cellH - gap - 4,
+                     fill: r.spread >= 3 ? "var(--accent)" : "var(--rule)" }, svg);
+      });
+      const res = DATA.resolution[sk];
+      note.innerHTML = `<b>${SITES.find(s => s.key === sk).label}:</b> ` +
+        `${res.strong} strong discriminators (spread ≥ 3) · ${res.dead} dead questions ` +
+        `(all models identical) · gold spread bars mark the discriminators. ` +
+        `Cell shading tracks the score from 5 to 10; × marks a failed gate (0).`;
+    }
+    SITES.forEach((s, i) => {
+      const b = document.createElement("button");
+      b.className = "tab"; b.textContent = s.label; b.setAttribute("role", "tab");
+      b.setAttribute("aria-selected", i === 0 ? "true" : "false");
+      b.addEventListener("click", () => {
+        tabs.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", "false"));
+        b.setAttribute("aria-selected", "true");
+        render(s.key);
+      });
+      tabs.appendChild(b);
+    });
+    render(SITES[0].key);
+  })();
+
+  /* ---------- 05 difficulty curves ---------- */
+  (function () {
+    const PW = 320, PH = 260, W = PW * 3, padL = 34, padR = 16, padT = 30, padB = 34;
+    const svg = svgIn("diffc", W, PH);
+    const bands = ["Easy", "Moderate", "Hard", "Expert"];
+    const lo = 6.8, hi = 9.6;
+    SITES.forEach((site, si) => {
+      const ox = si * PW;
+      const bx = i => ox + padL + i * (PW - padL - padR - 20) / (bands.length - 1) + 10;
+      const y = v => padT + (hi - v) / (hi - lo) * (PH - padT - padB);
+      el("text", { x: ox + padL, y: 16, class: "dlab", "font-size": 13 }, svg, site.label);
+      [7, 8, 9].forEach(v => {
+        el("line", { x1: ox + padL, x2: ox + PW - padR, y1: y(v), y2: y(v), class: "gline" }, svg);
+        el("text", { x: ox + padL - 4, y: y(v) + 3.5, "text-anchor": "end", class: "tick",
+                     "font-size": 9.5 }, svg, v);
+      });
+      bands.forEach((b, i) => {
+        el("text", { x: bx(i), y: PH - 14, "text-anchor": "middle", class: "tick" }, svg,
+          b.slice(0, 3));
+      });
+      KEYS.forEach(m => {
+        const pts = bands.map((b, i) => {
+          const band = DATA.difficulty[site.key][b];
+          return band && band[m] != null ? [bx(i), y(band[m]), band[m], band.n, b] : null;
+        }).filter(Boolean);
+        el("polyline", { points: pts.map(p => p[0] + "," + p[1]).join(" "), fill: "none",
+                         class: "s" + CIDX[m], "stroke-width": 2, opacity: .8 }, svg);
+        pts.forEach(p => {
+          const d = el("circle", { cx: p[0], cy: p[1], r: 3.5, class: "f" + CIDX[m] }, svg);
+          hover(d, `<div class="t1">${NAME[m]} — ${site.label}</div>
+            <div>${p[4]} (${p[3]} questions): mean ${p[2].toFixed(2)}</div>`);
+        });
+      });
+    });
+    /* caveat from the data itself */
+    const sg = DATA.difficulty.usgs;
+    const easyMean = KEYS.reduce((a, m) => a + sg.Easy[m], 0) / KEYS.length;
+    const expMean = KEYS.reduce((a, m) => a + sg.Expert[m], 0) / KEYS.length;
+    document.getElementById("diffcaveat").innerHTML =
+      `<b>The USGS set's labels are inverted:</b> its "Easy" questions average ` +
+      `${easyMean.toFixed(2)} while its "Expert" questions average ${expMean.toFixed(2)} — ` +
+      `models do better on the questions labelled hardest, and Easy separates them most. ` +
+      `The scores stand; the difficulty column for that district does not.`;
+  })();
+
+  /* ---------- 06 bubbles ---------- */
+  (function () {
+    const W = 960, H = 420, padL = 60, padR = 40, padT = 36, padB = 46;
+    const svg = svgIn("bubbles", W, H);
+    const E = DATA.effort;
+    const xmax = Math.max(...E.map(e => e.calls)) * 1.18;
+    const x = v => padL + v / xmax * (W - padL - padR);
+    const lo = 7.3, hi = 9.1;
+    const y = v => padT + (hi - v) / (hi - lo) * (H - padT - padB);
+    const k = 30 / Math.sqrt(Math.max(...E.map(e => e.cost)));
+    for (let v = 5; v < xmax; v += 5) {
+      el("line", { x1: x(v), x2: x(v), y1: padT, y2: H - padB, class: "gline" }, svg);
+      el("text", { x: x(v), y: H - padB + 16, "text-anchor": "middle", class: "tick" }, svg, v);
+    }
+    for (let v = 7.5; v <= 9; v += 0.5) {
+      el("line", { x1: padL, x2: W - padR, y1: y(v), y2: y(v), class: "gline" }, svg);
+      el("text", { x: padL - 8, y: y(v) + 4, "text-anchor": "end", class: "tick" }, svg, v.toFixed(1));
+    }
+    el("text", { x: (padL + W - padR) / 2, y: H - 6, "text-anchor": "middle", class: "tick" }, svg,
+      "mean tool calls per question (bubble area = total cost)");
+    E.forEach(e => {
+      const fg = DATA.pareto.find(p => p.key === e.key).freeGen;
+      const r = Math.max(7, k * Math.sqrt(e.cost));
+      const d = el("circle", { cx: x(e.calls), cy: y(e.score), r: r,
+                               class: "f" + CIDX[e.key], opacity: .8,
+                               stroke: "var(--surface)", "stroke-width": 2 }, svg);
+      el("text", { x: x(e.calls), y: y(e.score) - r - 6, "text-anchor": "middle",
+                   class: "dlab" }, svg, NAME[e.key]);
+      hover(d, `<div class="t1">${NAME[e.key]}</div>
+        <div>${e.calls} tool calls/question · score ${e.score.toFixed(2)}</div>
+        <div class="t2">total cost ${fmt$(e.cost)}${fg ? " (generation free-tier, judging only)" : ""} · median ${e.latency}s per question</div>`);
+    });
+  })();
+
+  /* ---------- 06b tool mix ---------- */
+  (function () {
+    const W = 960, rowH = 36, padL = 190, padR = 20, padT = 26;
+    const tools = DATA.tools.filter(t => KEYS.some(m => DATA.toolmix[m][t] >= 0.5));
+    const H = padT + KEYS.length * rowH + 30;
+    const svg = svgIn("toolmix", W, H);
+    const bw = W - padL - padR;
+    KEYS.forEach((m, i) => {
+      const y = padT + i * rowH;
+      el("text", { x: padL - 14, y: y + rowH / 2 + 4, "text-anchor": "end", class: "dlab" }, svg, NAME[m]);
+      let acc = 0;
+      tools.forEach((t, j) => {
+        const v = DATA.toolmix[m][t];
+        if (v <= 0) return;
+        const wx = v / 100 * bw;
+        const seg = el("rect", { x: padL + acc, y: y + 6, width: Math.max(0, wx - 2),
+                                 height: rowH - 14, rx: 3, fill: `var(--m${j})`,
+                                 opacity: .85 }, svg);
+        if (wx > 52) {
+          el("text", { x: padL + acc + wx / 2 - 1, y: y + rowH / 2 + 2.5, "text-anchor": "middle",
+                       "font-size": 10.5, "font-weight": 600, fill: "var(--surface)" }, svg,
+            t + " " + Math.round(v) + "%");
+        }
+        hover(seg, `<div class="t1">${NAME[m]}</div><div>${t}: ${v.toFixed(1)}% of calls</div>`);
+        acc += wx;
+      });
+    });
+    let lx = padL;
+    tools.forEach((t, j) => {
+      el("rect", { x: lx, y: H - 16, width: 10, height: 10, rx: 2, fill: `var(--m${j})` }, svg);
+      const tx = el("text", { x: lx + 15, y: H - 7, class: "tick", "font-size": 11 }, svg, t);
+      lx += 15 + t.length * 7 + 26;
+    });
+  })();
+
+  /* ---------- 07b resolution table ---------- */
+  (function () {
+    let h = `<table><thead><tr><th>District</th><th class="num">Top–bottom range</th>
+      <th class="num">Min detectable gap</th><th class="num">Resolution steps</th>
+      <th class="num">Strong discriminators</th><th class="num">Dead questions</th></tr></thead><tbody>`;
+    SITES.forEach(s => {
+      const r = DATA.resolution[s.key];
+      h += `<tr><td>${s.label}</td><td class="num">${r.range.toFixed(2)}</td>
+        <td class="num">${r.mdd.toFixed(2)}</td><td class="num">${r.steps.toFixed(1)}</td>
+        <td class="num">${r.strong} / 50</td><td class="num">${r.dead} / 50</td></tr>`;
+    });
+    document.getElementById("restable").innerHTML = h + `</tbody></table>
+      <p class="note">Minimum detectable gap: the smallest mean difference distinguishable
+      from zero at n=50, measured on a representative model pair. Resolution steps =
+      range ÷ that gap — how many distinct levels the district can actually separate.</p>`;
+  })();
+
+  /* ---------- 08 cost bars ---------- */
+  (function () {
+    const W = 960, rowH = 40, padL = 190, padR = 120, padT = 8;
+    const P = [...DATA.pareto].sort((a, b) => b.cost - a.cost);
+    const H = padT + P.length * rowH + 6;
+    const svg = svgIn("costbars", W, H);
+    const max = Math.max(...P.map(p => p.cost));
+    const x = v => v / max * (W - padL - padR);
+    P.forEach((p, i) => {
+      const y = padT + i * rowH + rowH / 2;
+      el("text", { x: padL - 14, y: y + 4, "text-anchor": "end", class: "dlab" }, svg, NAME[p.key]);
+      const g = el("rect", { x: padL, y: y - 10, width: Math.max(2, x(p.gen)), height: 20,
+                             rx: 4, class: "f" + CIDX[p.key] }, svg);
+      const j = el("rect", { x: padL + x(p.gen) + 2, y: y - 10, width: Math.max(2, x(p.judge)),
+                             height: 20, rx: 4, fill: "var(--rule)" }, svg);
+      el("text", { x: padL + x(p.cost) + 10, y: y + 4, class: "vlab" }, svg,
+        fmt$(p.cost) + (p.freeGen ? "   judging only — generation free tier" : ""));
+      hover(g, `<div class="t1">${NAME[p.key]}</div><div>generation ${fmt$(p.gen)}</div>`);
+      hover(j, `<div class="t1">${NAME[p.key]}</div><div>judging ${fmt$(p.judge)}</div>`);
+    });
+    el("text", { x: padL, y: H + 0, class: "tick" }, svg, "");
+  })();
+
+  /* ---------- 08b cost strip ---------- */
+  (function () {
+    const SKEYS = KEYS;   // every model gets a row; free-tier ones get a note
+    const W = 960, rowH = 34, padL = 190, padR = 80, padT = 24;
+    const H = padT + SKEYS.length * rowH + 26;
+    const svg = svgIn("strip", W, H);
+    let lo = Infinity, hi = 0;
+    KEYS.forEach(m => DATA.coststrip[m].forEach(v => {
+      if (v > 0) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
+    }));
+    lo = Math.max(lo, 0.002);
+    const x = v => padL + (Math.log(v) - Math.log(lo)) / (Math.log(hi * 1.3) - Math.log(lo)) * (W - padL - padR);
+    [0.01, 0.1, 1, 10].filter(v => v >= lo && v <= hi * 1.3).forEach(v => {
+      el("line", { x1: x(v), x2: x(v), y1: padT - 8, y2: H - 20, class: "gline" }, svg);
+      el("text", { x: x(v), y: padT - 12, "text-anchor": "middle", class: "tick" }, svg, fmt$(v));
+    });
+    SKEYS.forEach((m, i) => {
+      const y = padT + i * rowH + rowH / 2;
+      el("text", { x: padL - 14, y: y + 4, "text-anchor": "end", class: "dlab" }, svg, NAME[m]);
+      const vals = DATA.coststrip[m].filter(v => v > 0);
+      if (!vals.length) {
+        el("text", { x: padL + 6, y: y + 4, class: "tick", "font-size": 11.5 }, svg,
+          "every question billed $0 — free tier, nothing to place on a log axis");
+        return;
+      }
+      vals.forEach(v => {
+        el("circle", { cx: x(v), cy: y, r: 2.6, class: "f" + CIDX[m], opacity: .4 }, svg);
+      });
+      const med = vals[Math.floor(vals.length / 2)];
+      el("line", { x1: x(med), x2: x(med), y1: y - 9, y2: y + 9,
+                   stroke: "var(--ink)", "stroke-width": 2 }, svg);
+      const mx = vals[vals.length - 1];
+      el("text", { x: x(mx) + 8, y: y + 4, class: "vlab", "font-size": 10.5 }, svg, fmt$(mx));
+      const band = el("rect", { x: padL, y: y - rowH / 2, width: W - padL - padR, height: rowH,
+                                fill: "transparent" }, svg);
+      hover(band, `<div class="t1">${NAME[m]}</div>
+        <div>median ${fmt$(med)} · dearest question ${fmt$(mx)}</div>
+        <div class="t2">black tick = median · one dot per question (150)</div>`);
+    });
+  })();
+})();
+</script>
+
+</body>
+</html>

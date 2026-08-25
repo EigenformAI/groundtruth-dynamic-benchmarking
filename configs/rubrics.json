@@ -2,7 +2,7 @@
   {
     "key": "example",
     "label": "Yudnamutana Copper (sample, schema 2.0)",
-    "file": "rubrics/Yudnamutana_QA_grading_key.json",
+    "file": "rubrics/Yudnamutana/Yudnamutana_QA_grading_key.json",
     "project_dir": "./corpus/yudnamutana"
   }
 ]

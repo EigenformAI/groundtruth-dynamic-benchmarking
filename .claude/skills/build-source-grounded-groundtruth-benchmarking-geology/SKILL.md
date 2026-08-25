@@ -261,6 +261,14 @@ The gate must:
 - Be worth 2-4 points, leaving at least 6 points of graduated credit above it.
 - Be passable by a minimally correct answer and fail-able by a plausible adjacent, keyword-stuffed, or fundamentally misconceived answer.
 - Refer only to content awarded by C1. Do not make C2-Cn requirements implicit gate conditions.
+- Not be paid for twice. The reverse leak matters as much: no C2-Cn component may credit
+  what the gate already requires. If one does, every response that passes the gate earns
+  that component automatically, the true minimum rises above the gate value, and the
+  component discriminates nothing. Moving material out of the gate to keep it narrow is
+  what creates this — a gate holding a conclusion and a component holding its support
+  overlap unless the component is written to exclude the gated claim. Verify rather than
+  assume: the minimum-pass fixture must score EXACTLY the gate points, and if it scores
+  more, one component is paying twice.
 - Include at least one concrete fail example.
 
 `C1` is pass/fail as a whole and therefore must not contain partial-credit suballocations. If two independently gradable facts appear essential, move one to a non-gate component, rewrite the gate around their single shared mechanism, or split the question. Do not bundle independent facts into C1 and then zero an otherwise core-correct response for supplying only one of them.
@@ -416,8 +424,12 @@ Use a schema equivalent to:
     "positive_marking_after_gate": true,
     "holistic_bands": false
   },
-  "source_authority": [],
-  "global_variants": [],
+  "source_authority": [
+    { "rank": 1, "class": "...", "notes": "..." }
+  ],
+  "global_variants": [
+    { "term": "...", "variants": ["..."], "note": "..." }
+  ],
   "questions": [
     {
       "id": "A1",
@@ -440,11 +452,20 @@ Use a schema equivalent to:
         { "id": "C2", "points": 3, "is_gate": false, "credit_if": "..." },
         { "id": "C3", "points": 4, "is_gate": false, "credit_if": "..." }
       ],
-      "required_concepts": [],
-      "accepted_variants": [],
-      "indicative_terms": [],
-      "do_not_credit": [],
-      "evidence": [],
+      "required_concepts": ["..."],
+      "accepted_variants": ["..."],
+      "indicative_terms": ["..."],
+      "do_not_credit": ["..."],
+      "evidence": [
+        {
+          "claim": "...",
+          "source": "...",
+          "locator": "...",
+          "authority": "primary",
+          "confidence": "HIGH",
+          "notes": "..."
+        }
+      ],
       "calibration": [
         {
           "fixture_id": "A1-F1",
@@ -463,6 +484,36 @@ Use a schema equivalent to:
   ]
 }
 ```
+
+### Element shapes are fixed, not free
+
+The example above shows one element of every array on purpose. Earlier releases
+showed them as `[]`, and three benchmarks built from that produced three different
+shapes for the same field — every one valid against its own schema file, and
+collectively unreadable by one grading harness. Follow these exactly:
+
+| Field | Element |
+|---|---|
+| `required_concepts`, `accepted_variants`, `indicative_terms`, `do_not_credit` | plain **string** |
+| `evidence` | object with **exactly** `claim`, `source`, `locator`, `authority`, `confidence`, `notes` |
+| `global_variants` | object with `term`, `variants` (array of strings), `note` |
+| `source_authority` | object with `rank` (integer), `class`, `notes` |
+
+**Do not add keys to `evidence`.** A per-question quote, an anchor offset or a
+resolved path belongs in `notes`, or in the internal working files — not as a new
+key that only one benchmark has.
+
+**The four string arrays are strings, not name pairs, and must stay that way.** A
+variant rule often carries a proviso — *"accepted as ordinary period synonyms,
+provided the response also conveys the origin contrast"* — and splitting it into
+`{canonical, variants}` drops the condition that makes the rule correct. Write the
+rule as one line of prose exactly as a marker should read it.
+
+`global_variants` is optional and may be omitted entirely when a corpus has no
+corpus-wide variant table; a benchmark with none writes `[]`. Every
+grading-relevant variant must still appear in the affected question's
+`accepted_variants`, because a marker holding one question's block must not have
+to look elsewhere.
 
 Write the formal JSON Schema to `[Benchmark]_QA_grading_guide.schema.json` and validate every sidecar against it. The `2.0` sidecar is the structured content model and authoring source of truth: Phase 4 populates it, then renders the questions file and human-readable guide from it. The rendered guide is the ordinary grading and adjudication authority. Any mismatch between them is a release blocker. Do not use naive comma or delimiter splitting for terms that may themselves contain punctuation, numbers, scales, or explanatory text.
 
