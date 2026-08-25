@@ -2,9 +2,12 @@
 
 import argparse
 import concurrent.futures
+import hashlib
 import json
 import os
 import re
+import shutil
+import signal
 import subprocess
 import sys
 import threading
@@ -33,9 +36,21 @@ parser.add_argument(
 parser.add_argument(
     "--score",
     type=Path,
-    nargs=2,
-    metavar=("FILE_A", "FILE_B"),
-    help="pairwise and pointwise compare two already-generated answer files: --score A.json B.json",
+    nargs="+",
+    metavar="FILE",
+    help="judge already-generated answers. One file scores it pointwise (0-10 per "
+    "question, 1 judge call each) — this is what a leaderboard column is built "
+    "from. Two files add the A-vs-B pairwise verdict; see --score-mode.",
+)
+parser.add_argument(
+    "--score-mode",
+    choices=["both", "pointwise", "pairwise"],
+    default="both",
+    help="with two answer files, what to buy. both (default) = a 0-10 score for "
+    "each file plus the order-swapped A-vs-B verdict, 4 judge calls per question. "
+    "pointwise = the scores only, 2 calls. pairwise = the verdict only, 2 calls, "
+    "and produces no 0-10 score, so it cannot build a leaderboard column. Ignored "
+    "with one file, which is pointwise by definition.",
 )
 parser.add_argument(
     "--output",
@@ -101,15 +116,37 @@ parser.add_argument(
     metavar="KEY",
     help="vLLM API key for --mode api, paired with --api-url (default: $VLLM_API_KEY)",
 )
+parser.add_argument(
+    "--model",
+    default=os.getenv("OPENCODE_MODEL", "vllm/benchmark"),
+    metavar="ID",
+    help="candidate model, as opencode addresses it: provider/model "
+    "(default: $OPENCODE_MODEL, else vllm/benchmark = the alias the RunPod pod "
+    "serves under). Point it at an OpenRouter model id — openrouter/<id> — to "
+    "benchmark an API model instead, which needs no pod, no HF_TOKEN and no "
+    "RUNPOD_API_KEY.",
+)
 args = parser.parse_args()
 
 if args.mode == "api" and not args.api_url:
     parser.error("--mode api requires --api-url (or VLLM_API_URL in .env)")
 
 if args.score:
+    if len(args.score) > 2:
+        parser.error(
+            f"--score takes one file (pointwise) or two (pointwise + pairwise), "
+            f"got {len(args.score)}"
+        )
     for p in args.score:
         if not p.is_file():
             parser.error(f"--score file not found: {p}")
+
+# What the judge is asked for. One answer file leaves nothing to compare against,
+# so it is pointwise whatever --score-mode says.
+SCORE_MODE = "pointwise" if (args.score and len(args.score) == 1) else args.score_mode
+WANT_POINTWISE = SCORE_MODE in ("both", "pointwise")
+WANT_PAIRWISE = SCORE_MODE in ("both", "pairwise") and bool(args.score) and len(args.score) == 2
+POINTWISE_ONLY = bool(args.score) and len(args.score) == 1
 
 # None = standard tier (key omitted from the request); "flex" = discounted tier.
 SERVICE_TIER = None if args.no_flex else "flex"
@@ -120,6 +157,16 @@ OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
 ERROR_FILE = OUTPUT_FILE.parent / (OUTPUT_FILE.stem + ".errors.json")
 # Per-question raw opencode event streams (one .jsonl per id). Scoped by the output file's stem so a 3-run batch (…-first-run / -second-run / -third-run) keeps separate subfolders instead of overwriting each other's transcripts.
 TRANSCRIPTS_DIR = OUTPUT_FILE.parent / "transcripts" / OUTPUT_FILE.stem
+# Anything that spends money — judge calls, and candidate calls when the candidate
+# is an API model rather than the pod — is written to <output>.costs.jsonl the
+# moment it happens, one JSON object per line, and appended to a single
+# output/cost_ledger.jsonl across all runs. Written as it happens rather than at
+# the end so a run that is killed halfway still leaves on disk what it already
+# spent. Totals per run land in <output>.runs.jsonl.
+RUN_ID = f"{time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())}-{OUTPUT_FILE.stem}"
+COST_FILE = OUTPUT_FILE.parent / (OUTPUT_FILE.stem + ".costs.jsonl")
+COST_LEDGER = OUTPUT_FILE.parent / "cost_ledger.jsonl"
+RUNS_FILE = OUTPUT_FILE.parent / (OUTPUT_FILE.stem + ".runs.jsonl")
 # A registry key resolves to its entry; anything else is treated as a path, so an unregistered rubric can still be run directly.
 RUBRIC_ENTRY = RUBRIC_REGISTRY.get(args.rubric, {})
 ANSWER_KEY_FILE = Path(RUBRIC_ENTRY.get("file", args.rubric))
@@ -131,8 +178,11 @@ if not ANSWER_KEY_FILE.is_file():
     )
 
 # Opencode settings
-# Alias vLLM serves the model under, whichever model that is; must match ADAPTER_NAME in start_eval.sh.
-OPENCODE_MODEL = "vllm/benchmark"
+# How opencode addresses the candidate. Default "vllm/benchmark" is the alias vLLM
+# serves the model under and must match ADAPTER_NAME in start_eval.sh; --model /
+# $OPENCODE_MODEL points it at any provider opencode is configured for, which is
+# how an OpenRouter candidate runs without a pod at all.
+OPENCODE_MODEL = args.model
 # Passed to `opencode run --dir` so the model can explore the source documents for this rubric. A rubric with no project_dir runs without --dir.
 PROJECT_DIR = RUBRIC_ENTRY.get("project_dir")
 
@@ -146,17 +196,64 @@ SCORE_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 SCORE_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 SCORE_MODEL = "openai/gpt-5.5"
 
-JUDGE_USAGE = {"cost": 0.0, "prompt_tokens": 0, "completion_tokens": 0, "calls": 0}
+USAGE_TOTALS = {
+    "judge": {"cost": 0.0, "prompt_tokens": 0, "completion_tokens": 0, "calls": 0},
+    "candidate": {"cost": 0.0, "prompt_tokens": 0, "completion_tokens": 0, "calls": 0},
+}
+JUDGE_USAGE = USAGE_TOTALS["judge"]  # the judge half, reported in the run summary
+COST_BY_QUESTION = {}  # qid -> {"judge": $, "candidate": $}
+cost_lock = threading.Lock()
+# Which question the calling thread is working on, so a judge call made deep inside
+# score_answer() can be attributed without threading a qid through every helper.
+_ctx = threading.local()
+
+
+def log_usage(kind: str, phase: str, model: str, usage: dict, qid=None) -> None:
+    """Record one billed call: append it to the per-run and global cost logs and
+    add it to this run's totals. `kind` is "judge" or "candidate"; `phase` says
+    what the call was for (score / generate)."""
+    cost = float(usage.get("cost") or 0)
+    prompt_tokens = int(usage.get("prompt_tokens") or 0)
+    completion_tokens = int(usage.get("completion_tokens") or 0)
+    # qid comes from the thread context, except for opencode's event reader, which
+    # runs on its own thread and passes it explicitly.
+    qid = qid or getattr(_ctx, "qid", None)
+    record = {
+        "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "run_id": RUN_ID,
+        "kind": kind,
+        "phase": phase,
+        "rubric": args.rubric,
+        "question_id": qid,
+        "model": model,
+        "cost_usd": round(cost, 6),
+        "prompt_tokens": prompt_tokens,
+        "completion_tokens": completion_tokens,
+        "output_file": str(OUTPUT_FILE),
+    }
+    totals = USAGE_TOTALS[kind]
+    with cost_lock:
+        totals["calls"] += 1
+        totals["cost"] += cost
+        totals["prompt_tokens"] += prompt_tokens
+        totals["completion_tokens"] += completion_tokens
+        if qid is not None:
+            COST_BY_QUESTION.setdefault(qid, {"judge": 0.0, "candidate": 0.0})
+            COST_BY_QUESTION[qid][kind] += cost
+        line = json.dumps(record, ensure_ascii=False) + "\n"
+        for path in (COST_FILE, COST_LEDGER):
+            try:
+                with open(path, "a", encoding="utf-8") as f:
+                    f.write(line)
+            except OSError as e:
+                print(f"  [cost log] failed to write {path}: {e}", file=sys.stderr)
 
 
 def _accumulate_usage(data: dict) -> None:
     usage = data.get("usage") if isinstance(data, dict) else None
     if not isinstance(usage, dict):
         return
-    JUDGE_USAGE["calls"] += 1
-    JUDGE_USAGE["cost"] += usage.get("cost", 0) or 0
-    JUDGE_USAGE["prompt_tokens"] += usage.get("prompt_tokens", 0) or 0
-    JUDGE_USAGE["completion_tokens"] += usage.get("completion_tokens", 0) or 0
+    log_usage("judge", "score", SCORE_MODEL, usage)
 
 
 def fetch_model_pricing(model_id: str):
@@ -174,13 +271,17 @@ def fetch_model_pricing(model_id: str):
 
 
 def print_cost_estimate(n_questions: int) -> None:
-    """Pre-run ballpark: 4 judge calls/question (2 verdict + 2 score), with
-    rough per-call token averages, priced at live OpenRouter rates."""
-    calls = n_questions * 4
+    """Pre-run ballpark, priced at live OpenRouter rates. Calls per question
+    depend on what was asked for: 1 pointwise score per answer file, plus 2 for
+    the order-swapped pairwise verdict."""
+    per_q = (2 if WANT_PAIRWISE else 0) + (
+        (1 if POINTWISE_ONLY else 2) if WANT_POINTWISE else 0
+    )
+    calls = n_questions * per_q
     in_price, out_price = fetch_model_pricing(SCORE_MODEL)
     if in_price is None:
         print(
-            f"[estimate] {n_questions} questions x 4 = {calls} judge calls "
+            f"[estimate] {n_questions} questions x {per_q} = {calls} judge calls "
             "(live pricing unavailable)"
         )
         return
@@ -250,6 +351,17 @@ _REFUSAL_RE = re.compile(
 )
 MIN_ANSWER_CHARS = 20  # shorter than this after cleaning = truncated/failed
 
+# Reasons that mean the model stopped before it had finished answering: it still
+# wanted to call tools, or it ran into the token ceiling mid-sentence. Underscores are
+# folded to hyphens before matching so tool_calls and tool-calls both hit.
+_UNFINISHED_RE = re.compile(r"^(tool-calls?|tool-use|function-call|length|max-tokens)$")
+
+# A transport failure that reached the answer field as text rather than raising.
+_API_ERROR_RE = re.compile(
+    r"^\s*(?:HTTP\s*\d{3}\b|\d{3}\s+(?:Bad Gateway|Service Unavailable|Gateway Timeout)"
+    r"|(?:Error|error)\s*:\s*(?:\d{3}|upstream|connection)|Request failed with status)",
+)
+
 
 def clean_answer(text: str) -> str:
     # Non-destructive: recovers the real answer by stripping leaked control tokens ("<|turn>model", "<|channel>thought<channel|>", ...). The raw answer is kept separately; this is only used for the judge input and failure detection.
@@ -265,6 +377,8 @@ def is_failed_answer(text: str) -> bool:
         return True
     if _REFUSAL_RE.search(cleaned):
         return True
+    if _API_ERROR_RE.match(cleaned):
+        return True
     return cleaned.count(" ") / len(cleaned) < 0.02  # almost no spaces = degenerate
 
 
@@ -272,7 +386,112 @@ def norm_id(x) -> str:
     return re.sub(r"\D", "", str(x))
 
 
-def ask_opencode(question, retries=3):
+# --- Keeping the authoring skill away from the candidate -----------------------
+#
+# `.claude/skills/…/SKILL.md` documents the whole marking anatomy: the all-or-nothing
+# gate, components summing to 10, what earns credit and what is refused. A candidate
+# that reads it does not learn one answer, it learns how to write an answer that scores
+# well on every question of every site — a wider leak than the grading key itself.
+#
+# Disabling skill auto-loading is not enough. The file stays on disk, the candidate has
+# file tools, and `--dir` is a working directory rather than a boundary: an absolute path
+# resolves straight past it. So the directory is moved aside for the duration of a
+# generation run and put back afterwards. Scoring and --check-rubric never touch it.
+REPO_ROOT = Path(__file__).resolve().parent
+
+# Parked for the duration of a generation run, then put back.
+#
+#   .claude   the authoring skill, as described above.
+#   rubrics   the grading keys. The harness reads the chosen rubric into memory long
+#             before the first candidate call and never re-opens the file, so the
+#             directory can be absent while the candidate works. Measured on a live run
+#             with only .claude parked: the candidate reached rubrics/ on 13 of 50
+#             questions and had credit_if, pass_condition and model_answer in context on
+#             8 of them. Those answers score well and mean nothing.
+#
+# Config-based fencing is not an alternative: opencode's
+# `permission.external_directory: "deny"` was measured against 1.16.2 and does not
+# restrict paths in any form. Making the files absent is what works.
+PARK_DURING_GENERATION = [REPO_ROOT / ".claude", REPO_ROOT / "rubrics"]
+
+# Parked OUTSIDE the repository, not renamed in place. Renaming in place was tried and
+# failed on a live run: `rubrics.parked-during-generation` sat in the repo root, the
+# candidate listed the root, and read the grading guide out of it on 8 of 50 questions —
+# the new name advertised itself. A directory the candidate never walks past is what
+# hiding means.
+#
+# NOT the system temp directory. /tmp is swept: a typical tmpfiles.d carries
+# `D /tmp … 30d`, and the D means the contents are deleted on every boot. A reboot
+# during a run would take the whole rubrics/ tree with it — the benchmark itself, not a
+# cache of it.
+#
+# The repository's parent instead. Nothing sweeps it, it is almost always the same
+# filesystem, so the move is an atomic rename rather than a copy of the whole tree, and
+# it is derived from this file's location, so nothing is hardwired to one machine. The
+# name carries a hash of the repo path so two checkouts sharing a parent cannot collide,
+# and it is derived rather than randomised so a run killed outright can find and recover
+# its own parked copy on the next start.
+#
+# Being one level above the repo, it does sit on the path a candidate walks when it
+# climbs out of the corpus. That buys less than it looks: the leak that prompted all of
+# this came from a filesystem-wide search, not from climbing, and on a typical layout
+# the home directory is an ancestor too. Only an OS sandbox is a boundary.
+PARK_ROOT = REPO_ROOT.parent / (
+    ".gtb-parked-" + hashlib.sha1(str(REPO_ROOT).encode()).hexdigest()[:12]
+)
+
+
+def _parked_path(p: Path) -> Path:
+    return PARK_ROOT / p.name
+
+
+def _move(src: Path, dst: Path) -> None:
+    """rename when possible; fall back to a copy when home is a different filesystem."""
+    try:
+        src.rename(dst)
+    except OSError:
+        shutil.move(str(src), str(dst))
+
+
+def _restore_parked() -> None:
+    """Put everything back. Safe to call twice, and on any exit path."""
+    for live in PARK_DURING_GENERATION:
+        parked = _parked_path(live)
+        if parked.exists() and not live.exists():
+            _move(parked, live)
+    if PARK_ROOT.is_dir() and not any(PARK_ROOT.iterdir()):
+        PARK_ROOT.rmdir()
+
+
+def _park_for_generation() -> None:
+    """Move the candidate-forbidden directories aside. No-op when scoring."""
+    # A run killed with SIGKILL cannot have restored anything, so recover first rather
+    # than refusing to start or parking on top of an already-parked copy.
+    stale = [p for p in PARK_DURING_GENERATION
+             if _parked_path(p).exists() and not p.exists()]
+    if stale:
+        print(f"[isolation] recovering {', '.join(p.name for p in stale)} "
+              "parked by an earlier interrupted run")
+        _restore_parked()
+    moved = []
+    for live in PARK_DURING_GENERATION:
+        parked = _parked_path(live)
+        if not live.exists():
+            continue
+        if parked.exists():
+            _restore_parked()
+            sys.exit(
+                f"[error] both {live.name} and {parked.name} exist; "
+                "resolve by hand before generating"
+            )
+        PARK_ROOT.mkdir(parents=True, exist_ok=True)
+        _move(live, parked)
+        moved.append(live.name)
+    if moved:
+        print(f"[isolation] parked for this run: {', '.join(moved)} — restored on exit")
+
+
+def ask_opencode(question, qid=None, retries=3):
     prompt = f"@explore {question}" if args.explore else question
     last_raw = ""
     last_error = ""
@@ -281,15 +500,22 @@ def ask_opencode(question, retries=3):
         if PROJECT_DIR:
             cmd += ["--dir", PROJECT_DIR]
         cmd += ["--dangerously-skip-permissions", "--format", "json", prompt]
+        # Second belt. Parking .claude removes this repo's skill; this stops opencode
+        # loading one from anywhere else in its search path. Neither is a substitute for
+        # the other: the env var only prevents auto-loading, and a file left on disk can
+        # still be read deliberately by an agent holding file tools.
+        candidate_env = {**os.environ, "OPENCODE_DISABLE_CLAUDE_CODE_SKILLS": "1"}
         proc = subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
             stderr=None,
             text=True,
+            env=candidate_env,
         )
         texts = []
         raw_lines = []
         error_msgs = []
+        finish_reasons = []
 
         def _read():
             for line in proc.stdout:
@@ -305,6 +531,33 @@ def ask_opencode(question, retries=3):
                     elif event_type == "tool_use":
                         tool = obj["part"].get("tool", "")
                         print(f"  [tool] {tool}", flush=True)
+                    elif event_type == "step_finish":
+                        # One agent step = one call to the candidate model.
+                        # opencode prices it itself, so a candidate served over
+                        # OpenRouter reports real dollars here; a local vLLM pod
+                        # reports 0, which is correct — that run is billed as GPU
+                        # time, not per token.
+                        part = obj.get("part") or {}
+                        # Why this step ended. "stop" = the model finished speaking;
+                        # "tool-calls" = it still wanted to call tools and the run ran
+                        # out first, so whatever text exists is mid-exploration
+                        # narration, not an answer. This is the only reliable signal:
+                        # narration is grammatical, ordinary-length prose, so no length
+                        # or wording test separates it from a real answer.
+                        if part.get("reason"):
+                            finish_reasons.append(part["reason"])
+                        tok = part.get("tokens") or {}
+                        log_usage(
+                            "candidate",
+                            "generate",
+                            OPENCODE_MODEL,
+                            {
+                                "cost": part.get("cost"),
+                                "prompt_tokens": tok.get("input"),
+                                "completion_tokens": tok.get("output"),
+                            },
+                            qid=qid,
+                        )
                     elif event_type == "error":
                         err = obj.get("error") or {}
                         data = err.get("data") or {}
@@ -338,8 +591,25 @@ def ask_opencode(question, retries=3):
         if error_msgs:
             last_error = error_msgs[-1]
         cleaned = clean_answer(result)
-        if cleaned:
+        # Deny-list, not an allow-list. Providers normalise this differently — OpenAI
+        # says tool_calls, Anthropic tool_use, and opencode reports tool-calls for the
+        # one model measured here — and an allow-list of "stop" would mark every answer
+        # from an unrecognised provider as failed, retry it three times, and spend the
+        # budget producing nothing. An unknown reason is therefore treated as success:
+        # the worst case is the old behaviour, not a run that burns money and fails.
+        unfinished = bool(finish_reasons) and _UNFINISHED_RE.match(
+            str(finish_reasons[-1]).strip().lower().replace("_", "-")
+        ) is not None
+        if cleaned and not unfinished:
             return result, last_raw, ""
+        if unfinished:
+            last_error = f"run ended on {finish_reasons[-1]}, not a finished answer"
+            print(
+                f"  [retry {attempt}/{retries}] {last_error}, retrying...",
+                flush=True,
+            )
+            time.sleep(2)
+            continue
         if result and not cleaned:
             print(
                 f"  [retry {attempt}/{retries}] only thinking tokens returned (no answer), retrying...",
@@ -834,7 +1104,15 @@ file_answers_map = {}
 source_a = ""
 source_b = ""
 
-if args.score:
+if POINTWISE_ONLY:
+    # The single file plays the part File B plays in a pairwise run: it carries the
+    # answers being graded. There is no File A, so nothing is compared against.
+    file_b = args.score[0]
+    with open(file_b) as f:
+        questions_to_run = json.load(f)
+    warn_rubric_mismatch(questions_to_run, f"Answers ({file_b})")
+    source_b = str(file_b)
+elif args.score:
     file_a, file_b = args.score[0], args.score[1]
     with open(file_a) as f:
         file_a_items = json.load(f)
@@ -867,7 +1145,8 @@ if args.ids:
         f"{', '.join(str(q['id']) for q in questions_to_run)}"
     )
 
-if args.score:
+# Pointwise has no File A to line up against, so this check does not apply.
+if args.score and not POINTWISE_ONLY:
     missing_a = [
         str(q["id"]) for q in questions_to_run if q["id"] not in file_answers_map
     ]
@@ -892,7 +1171,11 @@ answers = []
 if OUTPUT_FILE.exists():
     with open(OUTPUT_FILE) as f:
         answers = json.load(f)
-    fields_to_check = ["answer_a", "answer_b"] if args.score else ["answer_b"]
+    # Pointwise writes no answer_a, so checking for it would mark every finished
+    # entry as failed and re-buy the whole file on resume.
+    fields_to_check = (
+        ["answer_a", "answer_b"] if (args.score and not POINTWISE_ONLY) else ["answer_b"]
+    )
     done_ids = set()
     wrong_rubric_ids = set()
     for e in answers:
@@ -919,7 +1202,13 @@ if OUTPUT_FILE.exists():
         )
 
 if args.score:
-    print(f"Scoring: A = {source_a}  vs  B = {source_b}  (judge: {SCORE_MODEL})")
+    if POINTWISE_ONLY:
+        print(f"Scoring (pointwise): {source_b}  (judge: {SCORE_MODEL})")
+    else:
+        print(
+            f"Scoring ({SCORE_MODE}): A = {source_a}  vs  B = {source_b}  "
+            f"(judge: {SCORE_MODEL})"
+        )
 else:
     print(f"Generating answers with the live model ({args.mode} mode) -> {OUTPUT_FILE}")
 if args.score:
@@ -1002,13 +1291,14 @@ def save_entry(entry, announce=True) -> None:
 def process_item_generate(item, idx):
     """No --score: live-generate one answer (answer_b) and save it."""
     qid = item["id"]
+    _ctx.qid = qid  # attributes any billed call made below to this question
     question = item["question"]
     print(f"[{idx}/{total}] {qid}: {question[:100]}")
 
     if args.mode == "api":
         answer_b, raw_output, gen_error = ask_api(question), "", ""
     else:
-        answer_b, raw_output, gen_error = ask_opencode(question)
+        answer_b, raw_output, gen_error = ask_opencode(question, qid)
     write_transcript(qid, raw_output)  # no-op when raw_output is empty
 
     entry = {"id": qid, "question": question}
@@ -1031,71 +1321,98 @@ def process_item_generate(item, idx):
 def process_item_score(item, idx):
     """--score FILE_A FILE_B: both answers already exist on disk, judge them."""
     qid = item["id"]
+    _ctx.qid = qid  # attributes the judge calls made below to this question
     question = item["question"]
     header = f"[{idx}/{total}] {qid}: {question[:100]}"
     if args.workers == 1:
         print(header, flush=True)
 
-    answer_a = file_answers_map.get(qid, "")
+    answer_a = "" if POINTWISE_ONLY else file_answers_map.get(qid, "")
     answer_b = item.get("answer_b", item.get("answer", ""))
 
     rubric = answer_key_map.get(norm_id(qid), {})
-    result = compare_answers(question, rubric, answer_a, answer_b)
-    score_a = score_answer(question, rubric, answer_a)
-    score_b = score_answer(question, rubric, answer_b)
+    # Only what the mode asked for is bought. Each skipped call is one judge
+    # request per question that is never made.
+    result = (
+        compare_answers(question, rubric, answer_a, answer_b) if WANT_PAIRWISE else None
+    )
+    score_a = (
+        score_answer(question, rubric, answer_a)
+        if WANT_POINTWISE and not POINTWISE_ONLY
+        else None
+    )
+    score_b = score_answer(question, rubric, answer_b) if WANT_POINTWISE else None
 
     entry = {"id": qid, "question": question}
-    entry["answer_a"] = answer_a
-    entry["answer_a_clean"] = clean_answer(answer_a)
-    entry["source_answer_a"] = source_a
+    if not POINTWISE_ONLY:
+        entry["answer_a"] = answer_a
+        entry["answer_a_clean"] = clean_answer(answer_a)
+        entry["source_answer_a"] = source_a
     entry["answer_b"] = answer_b
     entry["answer_b_clean"] = clean_answer(answer_b)
     entry["source_answer_b"] = source_b
-    entry["verdict"] = result["verdict"]
-    entry["verdict_normal"] = result.get("verdict_normal")
-    entry["verdict_normal_score"] = result.get("verdict_normal_score")
-    entry["verdict_swapped"] = result.get("verdict_swapped")
-    entry["verdict_swapped_score"] = result.get("verdict_swapped_score")
-    entry["avg_score"] = result.get("avg_score")
-    entry["reason"] = result["reason"]
-    entry["score_a"] = score_a["score"]
-    entry["score_a_reason"] = score_a["reason"]
-    entry["score_a_gate_passed"] = score_a["gate_passed"]
-    entry["score_a_components"] = score_a["components"]
-    entry["score_a_adjudication_required"] = score_a["adjudication_required"]
-    entry["score_a_adjudication_note"] = score_a["adjudication_note"]
-    entry["score_b"] = score_b["score"]
-    entry["score_b_reason"] = score_b["reason"]
-    entry["score_b_gate_passed"] = score_b["gate_passed"]
-    entry["score_b_components"] = score_b["components"]
-    entry["score_b_adjudication_required"] = score_b["adjudication_required"]
-    entry["score_b_adjudication_note"] = score_b["adjudication_note"]
+    if result:
+        entry["verdict"] = result["verdict"]
+        entry["verdict_normal"] = result.get("verdict_normal")
+        entry["verdict_normal_score"] = result.get("verdict_normal_score")
+        entry["verdict_swapped"] = result.get("verdict_swapped")
+        entry["verdict_swapped_score"] = result.get("verdict_swapped_score")
+        entry["avg_score"] = result.get("avg_score")
+        entry["reason"] = result["reason"]
+    if score_a:
+        entry["score_a"] = score_a["score"]
+        entry["score_a_reason"] = score_a["reason"]
+        entry["score_a_gate_passed"] = score_a["gate_passed"]
+        entry["score_a_components"] = score_a["components"]
+        entry["score_a_adjudication_required"] = score_a["adjudication_required"]
+        entry["score_a_adjudication_note"] = score_a["adjudication_note"]
+    if score_b:
+        entry["score_b"] = score_b["score"]
+        entry["score_b_reason"] = score_b["reason"]
+        entry["score_b_gate_passed"] = score_b["gate_passed"]
+        entry["score_b_components"] = score_b["components"]
+        entry["score_b_adjudication_required"] = score_b["adjudication_required"]
+        entry["score_b_adjudication_note"] = score_b["adjudication_note"]
     save_entry(entry, announce=False)
-    result_block = (
-        f"  -> verdict: {result['verdict']} | score_a: {score_a['score']} | "
-        f"score_b: {score_b['score']}\n"
-        f"  -> saved to {OUTPUT_FILE}"
-    )
+    parts = []
+    if result:
+        parts.append(f"verdict: {result['verdict']}")
+    if score_a:
+        parts.append(f"score_a: {score_a['score']}")
+    if score_b:
+        parts.append(f"score{'' if POINTWISE_ONLY else '_b'}: {score_b['score']}")
+    result_block = f"  -> {' | '.join(parts)}\n  -> saved to {OUTPUT_FILE}"
     print(result_block if args.workers == 1 else f"{header}\n{result_block}")
     return entry
 
 
 process_item = process_item_score if args.score else process_item_generate
 
-if args.workers > 1:
-    print(f"[parallel] processing with {args.workers} workers")
-    with concurrent.futures.ThreadPoolExecutor(max_workers=args.workers) as executor:
-        futures = [
-            executor.submit(process_item, item, idx)
-            for idx, item in enumerate(questions_to_run, 1)
-        ]
-        for future in concurrent.futures.as_completed(futures):
-            future.result()  # surface exceptions (e.g. SystemExit from a 401)
-else:
-    for idx, item in enumerate(questions_to_run, 1):
-        process_item(item, idx)
-        if not args.score and args.mode == "api":
-            time.sleep(1)
+if not args.score:
+    # Ctrl+C already unwinds through the finally below; make `kill` do the same, or a
+    # SIGTERM leaves .claude parked and the next authoring session finds no skill.
+    signal.signal(
+        signal.SIGTERM, lambda *_: (_ for _ in ()).throw(KeyboardInterrupt)
+    )
+    _park_for_generation()
+
+try:
+    if args.workers > 1:
+        print(f"[parallel] processing with {args.workers} workers")
+        with concurrent.futures.ThreadPoolExecutor(max_workers=args.workers) as executor:
+            futures = [
+                executor.submit(process_item, item, idx)
+                for idx, item in enumerate(questions_to_run, 1)
+            ]
+            for future in concurrent.futures.as_completed(futures):
+                future.result()  # surface exceptions (e.g. SystemExit from a 401)
+    else:
+        for idx, item in enumerate(questions_to_run, 1):
+            process_item(item, idx)
+            if not args.score and args.mode == "api":
+                time.sleep(1)
+finally:
+    _restore_parked()
 
 if args.score and answers:
     verdicts = [e.get("verdict", "") for e in answers]
@@ -1131,14 +1448,63 @@ if args.score and answers:
         print(
             f"Adjudication -> {len(flagged)} question(s) flagged: {', '.join(flagged)}"
         )
-    if JUDGE_USAGE["calls"]:
-        cost = JUDGE_USAGE["cost"]
-        # flex is ~50% off standard, so the two tiers differ by roughly 2x.
-        if SERVICE_TIER == "flex":
-            tier_note = f"${cost:.4f} (flex) | ~${cost * 2:.4f} est. standard"
-        else:
-            tier_note = f"${cost:.4f} (standard) | ~${cost / 2:.4f} est. flex"
-        print(
-            f"Judge cost -> {tier_note} | {JUDGE_USAGE['calls']} calls, "
-            f"{JUDGE_USAGE['prompt_tokens']:,} in + {JUDGE_USAGE['completion_tokens']:,} out tokens"
-        )
+
+# Cost and the run record apply to BOTH tasks. They used to sit inside the
+# `if args.score` summary above, from when scoring was the only path that spent
+# money; an OpenRouter candidate spends money generating too, so a generate run
+# left no record of what it cost, which candidate answered, or that .claude and
+# rubrics/ were parked while it ran. A result you cannot trace to the conditions
+# that produced it is not much of a result.
+if JUDGE_USAGE["calls"]:
+    cost = JUDGE_USAGE["cost"]
+    # flex is ~50% off standard, so the two tiers differ by roughly 2x.
+    if SERVICE_TIER == "flex":
+        tier_note = f"${cost:.4f} (flex) | ~${cost * 2:.4f} est. standard"
+    else:
+        tier_note = f"${cost:.4f} (standard) | ~${cost / 2:.4f} est. flex"
+    print(
+        f"Judge cost -> {tier_note} | {JUDGE_USAGE['calls']} calls, "
+        f"{JUDGE_USAGE['prompt_tokens']:,} in + {JUDGE_USAGE['completion_tokens']:,} out tokens"
+    )
+
+candidate = USAGE_TOTALS["candidate"]
+# A pod candidate reports 0 and is billed as GPU time instead, so its line is
+# only worth printing when there is something to print.
+if candidate["cost"]:
+    print(
+        f"Candidate cost -> ${candidate['cost']:.4f} | {candidate['calls']} calls, "
+        f"{candidate['prompt_tokens']:,} in + {candidate['completion_tokens']:,} out tokens"
+    )
+if JUDGE_USAGE["calls"] or candidate["calls"]:
+    total_cost = JUDGE_USAGE["cost"] + candidate["cost"]
+    print(f"Total cost -> ${total_cost:.4f}   (log: {COST_FILE})")
+    record = {
+        "run_id": RUN_ID,
+        "finished_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "task": "score" if args.score else "generate",
+        "rubric": args.rubric,
+        "rubric_file": str(ANSWER_KEY_FILE),
+        "output_file": str(OUTPUT_FILE),
+        "candidate_model": OPENCODE_MODEL if args.mode == "opencode" else API_MODEL,
+        "judge_model": SCORE_MODEL if JUDGE_USAGE["calls"] else None,
+        "service_tier": (SERVICE_TIER or "standard") if JUDGE_USAGE["calls"] else None,
+        "cost": {
+            "judge_usd": round(JUDGE_USAGE["cost"], 6),
+            "candidate_usd": round(candidate["cost"], 6),
+            "total_usd": round(total_cost, 6),
+            "judge_calls": JUDGE_USAGE["calls"],
+            "candidate_calls": candidate["calls"],
+        },
+        "cost_by_question": {
+            k: {kk: round(vv, 6) for kk, vv in v.items()}
+            for k, v in sorted(COST_BY_QUESTION.items())
+        },
+    }
+    try:
+        # One line per run, appended: a resumed run adds its own record instead
+        # of overwriting what the first attempt already spent.
+        with open(RUNS_FILE, "a", encoding="utf-8") as f:
+            f.write(json.dumps(record, ensure_ascii=False) + "\n")
+        print(f"Run record -> {RUNS_FILE}")
+    except OSError as e:
+        print(f"[run record] failed to write {RUNS_FILE}: {e}", file=sys.stderr)

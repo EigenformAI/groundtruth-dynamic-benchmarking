@@ -34,7 +34,15 @@ RUBRICS_CONFIG="$SCRIPT_DIR/configs/rubrics.json"
 build_docker_args() {
   local idx="$1" model lora tokenizer rank
   MODEL_LABEL=$(jq -r ".[$idx].label" "$MODELS_CONFIG")
+  MODEL_PROVIDER=$(jq -r ".[$idx].provider // \"vllm\"" "$MODELS_CONFIG")
   model=$(jq -r ".[$idx].model" "$MODELS_CONFIG")
+
+  if [[ "$MODEL_PROVIDER" == "openrouter" ]]; then
+    MODEL_FLAG="--model openrouter/$model"
+    DOCKER_ARGS=""
+    return
+  fi
+
   lora=$(jq -r ".[$idx].lora // empty" "$MODELS_CONFIG")
   tokenizer=$(jq -r ".[$idx].tokenizer // empty" "$MODELS_CONFIG")
   rank=$(jq -r ".[$idx].max_lora_rank // empty" "$MODELS_CONFIG")
@@ -49,7 +57,7 @@ build_docker_args() {
 echo ""
 echo "=== Task ==="
 echo "  1) Generate answers — ask the model each rubric question (creates a RunPod GPU pod)"
-echo "  2) Score answers    — judge two already-generated answer files (OpenRouter only, no GPU)"
+echo "  2) Score answers    — judge already-generated answer files (OpenRouter only, no GPU)"
 read -rp "Choice [1-2, default: 1]: " TASK_CHOICE
 case "${TASK_CHOICE:-1}" in
   1) DO_SCORE=false ;;
@@ -87,6 +95,8 @@ MODE="opencode"
 EXPLORE_FLAG=""
 WORKERS=1
 DOCKER_ARGS=""
+MODEL_FLAG=""
+MODEL_PROVIDER="vllm"
 MODEL_LABEL=""
 MODEL_A_LABEL=""
 MODEL_B_LABEL=""
@@ -145,15 +155,43 @@ if [[ "$DO_SCORE" == "true" ]]; then
 
   # Two already-generated answer files, judged against each other — no RunPod needed.
   echo ""
-  echo "  Score a single pair of files, or a three-run batch?"
-  echo "    1) single pair"
-  echo "    3) three pairs (first / second / third run)"
+  echo "  What should the judge produce?"
+  echo "    1) both      — the 0-10 score for two files PLUS the A-vs-B verdict.  4 calls/question"
+  echo "    2) pairwise  — the A-vs-B verdict only, no 0-10 score.  2 calls/question"
+  echo "       Cannot build a leaderboard column: there is no absolute number."
+  echo "    3) pointwise — 0-10 score per question, ONE answer file.  1 judge call/question"
+  echo "       This is what a leaderboard column is built from."
+  read -rp "  Choice [1-3, default: 1]: " _SCORE_MODE_CHOICE
+  case "${_SCORE_MODE_CHOICE:-1}" in
+    1) SCORE_MODE="both";      NEED_TWO=true  ;;
+    2) SCORE_MODE="pairwise";  NEED_TWO=true  ;;
+    3) SCORE_MODE="pointwise"; NEED_TWO=false ;;
+    *) echo "Invalid choice"; exit 1 ;;
+  esac
+  # --score-mode only means anything with two files; one file is pointwise by
+  # definition and main.py ignores the flag there.
+  MODE_FLAG=""
+  [[ "$NEED_TWO" == "true" ]] && MODE_FLAG=" --score-mode $SCORE_MODE"
+
+  echo ""
+  echo "  Score a single $([[ "$NEED_TWO" == "true" ]] && echo "pair of files" || echo "file"), or a three-run batch?"
+  if [[ "$NEED_TWO" == "true" ]]; then
+    echo "    1) single pair"
+    echo "    3) three pairs (first / second / third run)"
+  else
+    echo "    1) single file"
+    echo "    3) three files (first / second / third run)"
+  fi
   read -rp "  Choice [1/3, default: 1]: " _SCORE_RUNS
   if [[ "${_SCORE_RUNS:-1}" == "3" ]]; then
     for _label in "first-run" "second-run" "third-run"; do
       echo "  --- $_label ---"
-      _fa=$(_read_answer_file "    File A: "); _fa=$(_convert_if_jsonl "$_fa")
-      _fb=$(_read_answer_file "    File B: "); _fb=$(_convert_if_jsonl "$_fb")
+      if [[ "$NEED_TWO" == "true" ]]; then
+        _fa=$(_read_answer_file "    File A: "); _fa=$(_convert_if_jsonl "$_fa")
+        _fb=$(_read_answer_file "    File B: "); _fb=$(_convert_if_jsonl "$_fb")
+      else
+        _fa=""; _fb=$(_read_answer_file "    Answer file: "); _fb=$(_convert_if_jsonl "$_fb")
+      fi
       read -rp "    Output file: " _out
       if [[ "$EXPORT_ON" == "true" ]]; then
         read -rp "    Model A label: " _ma
@@ -161,16 +199,22 @@ if [[ "$DO_SCORE" == "true" ]]; then
         MODEL_A_LABELS+=("$_ma")
         MODEL_B_LABELS+=("$_mb")
       fi
-      SCORE_FLAGS_ARR+=("--score $_fa $_fb")
+      SCORE_FLAGS_ARR+=("--score $_fa $_fb$MODE_FLAG")
       OUTPUT_FILES_ARR+=("$_out")
     done
     SCORE_MULTI_RUN=true
   else
-    _fa=$(_read_answer_file "  File A path: ")
-    _fb=$(_read_answer_file "  File B path: ")
-    _fa=$(_convert_if_jsonl "$_fa")
-    _fb=$(_convert_if_jsonl "$_fb")
-    SCORE_FLAGS_ARR+=("--score $_fa $_fb")
+    if [[ "$NEED_TWO" == "true" ]]; then
+      _fa=$(_read_answer_file "  File A path: ")
+      _fb=$(_read_answer_file "  File B path: ")
+      _fa=$(_convert_if_jsonl "$_fa")
+      _fb=$(_convert_if_jsonl "$_fb")
+    else
+      _fa=""
+      _fb=$(_read_answer_file "  Answer file path: ")
+      _fb=$(_convert_if_jsonl "$_fb")
+    fi
+    SCORE_FLAGS_ARR+=("--score $_fa $_fb$MODE_FLAG")
     SCORE_MULTI_RUN=false
     if [[ "$EXPORT_ON" == "true" ]]; then
       read -rp "  Model A label: " MODEL_A_LABEL
@@ -189,13 +233,10 @@ if [[ "$DO_SCORE" == "true" ]]; then
 fi
 
 if [[ "$NEED_RUNPOD" == "true" ]]; then
-  require_env RUNPOD_API_KEY "creating the GPU pod"
-  require_env HF_TOKEN "pulling the model/LoRA on the pod"
-
   echo ""
-  echo "=== Select vLLM model ==="
+  echo "=== Select model ==="
   N_MODELS=$(jq 'length' "$MODELS_CONFIG")
-  jq -r 'to_entries[] | "\(.key + 1)) \(.value.label)"' "$MODELS_CONFIG"
+  jq -r 'to_entries[] | "  \(.key + 1)) \(.value.label)  [\(.value.provider // "vllm")]"' "$MODELS_CONFIG"
   echo ""
   read -rp "Choice [1-$N_MODELS]: " MODEL_CHOICE
 
@@ -203,18 +244,28 @@ if [[ "$NEED_RUNPOD" == "true" ]]; then
     echo "Invalid choice"; exit 1
   fi
   build_docker_args $((MODEL_CHOICE - 1))
-  echo "Model: $MODEL_LABEL"
 
-  echo ""
-  echo "=== Select mode ==="
-  echo "1) opencode — agent mode; the model can read the project documents (default)"
-  echo "2) api      — plain vLLM chat-completions call, question text only"
-  read -rp "Choice [1-2]: " MODE_CHOICE
-  case "${MODE_CHOICE:-1}" in
-    1) MODE="opencode" ;;
-    2) MODE="api" ;;
-    *) echo "Invalid choice"; exit 1 ;;
-  esac
+  if [[ "$MODEL_PROVIDER" == "openrouter" ]]; then
+    NEED_RUNPOD=false
+    require_env OPENROUTER_API_KEY "calling the candidate model on OpenRouter"
+    MODE="opencode"
+    echo "Model: $MODEL_LABEL — ${MODEL_FLAG#--model }  (no GPU pod needed)"
+  else
+    require_env RUNPOD_API_KEY "creating the GPU pod"
+    require_env HF_TOKEN "pulling the model/LoRA on the pod"
+    echo "Model: $MODEL_LABEL"
+
+    echo ""
+    echo "=== Select mode ==="
+    echo "1) opencode — agent mode; the model can read the project documents (default)"
+    echo "2) api      — plain vLLM chat-completions call, question text only"
+    read -rp "Choice [1-2]: " MODE_CHOICE
+    case "${MODE_CHOICE:-1}" in
+      1) MODE="opencode" ;;
+      2) MODE="api" ;;
+      *) echo "Invalid choice"; exit 1 ;;
+    esac
+  fi
 
   if [[ "$MODE" == "opencode" ]]; then
     echo ""
@@ -255,6 +306,7 @@ echo ""
 echo "=== Summary ==="
 echo "  Task:    $([[ "$DO_SCORE" == "true" ]] && echo "score" || echo "generate")"
 echo "  Rubric:  ${RUBRIC_FLAG#--rubric }"
+[[ "$DO_SCORE" == "true" ]] && echo "  Scoring: $SCORE_MODE — $([[ "$NEED_TWO" == "true" ]] && echo "two answer files" || echo "one answer file")" || true
 if [[ "$NEED_RUNPOD" == "true" ]]; then
   echo "  Model:   $MODEL_LABEL"
   echo "  Mode:    $MODE"
@@ -431,7 +483,7 @@ for suffix in "${RUN_SUFFIXES[@]}"; do
   echo ""
   echo "=== Running main.py | mode: $MODE | explore: $([[ -n "$EXPLORE_FLAG" ]] && echo yes || echo no) | workers: $WORKERS | output: $OUTPUT_FILE ==="
   echo ""
-  uv run python main.py --mode "$MODE" $EXPLORE_FLAG --workers "$WORKERS" --output "$OUTPUT_FILE" $SCORE_FLAG ${RUBRIC_FLAG:-} ${NOFLEX_FLAG:-} ${API_FLAG:-} "$@"
+  uv run python main.py --mode "$MODE" $EXPLORE_FLAG --workers "$WORKERS" --output "$OUTPUT_FILE" $SCORE_FLAG ${RUBRIC_FLAG:-} ${NOFLEX_FLAG:-} ${API_FLAG:-} ${MODEL_FLAG:-} "$@"
 
   [[ "$NEED_RUNPOD" == "true" ]] && terminate_pod
 

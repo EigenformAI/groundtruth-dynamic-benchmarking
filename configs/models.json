@@ -1,6 +1,7 @@
 [
   {
     "label": "Base",
+    "provider": "vllm",
     "model": "QuantTrio/gemma-4-31B-it-AWQ"
   }
 ]
