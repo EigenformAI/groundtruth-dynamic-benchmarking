@@ -199,13 +199,16 @@ async function loadRubricQuestionIds(questionsFile) {
   return ids;
 }
 
+const SUBMISSION_TRACKS = new Set(["model-benchmark", "harness-benchmark"]);
+
 async function listSubmissionSlugs() {
-  const entries = await fetchJson(`${DATASET_API}/${SUBMISSIONS_REPO}/tree/main/submissions`);
+  const entries = await fetchJson(`${DATASET_API}/${SUBMISSIONS_REPO}/tree/main/submissions?recursive=true`);
   const slugs = [];
   for (const e of entries) {
     const parts = e.path.split("/");
-    if (e.type === "directory" && parts.length === 2 && parts[0] === "submissions" && parts[1] !== "_template") {
-      slugs.push(parts[1]);
+    if (e.type === "directory" && parts.length === 3
+        && parts[0] === "submissions" && SUBMISSION_TRACKS.has(parts[1]) && parts[2] !== "_template") {
+      slugs.push(`${parts[1]}/${parts[2]}`);
     }
   }
   return slugs;
@@ -346,7 +349,7 @@ function renderBanner() {
   bannerEl.innerHTML = `<div class="banner">
     <strong>Fixed model:</strong> ${escapeHtml(HARNESS_TRACK.reference_model_label || HARNESS_TRACK.reference_model_id)}
     (<code>${escapeHtml(HARNESS_TRACK.reference_model_id)}</code>) — only submissions calling this exact model are shown,
-    ranked by harness rather than by model. "no harness" rows are Kimi K3 called directly, the baseline every harness is trying to beat.
+    ranked by harness rather than by model. "no harness" rows are GLM 4.7 called directly, the baseline every harness is trying to beat.
   </div>`;
 }
 
