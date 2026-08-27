@@ -1,0 +1,57 @@
+name: Repo metrics snapshot
+
+# GitHub's traffic API only exposes a rolling 14-day window, so this workflow
+# takes a weekly snapshot and appends it to a committed CSV to build real
+# history for stars/forks/traffic over time (tracked against the 20-fork goal).
+on:
+  schedule:
+    - cron: '0 6 * * 1' # every Monday 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Collect stats
+        id: stats
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -e
+          repo_json=$(gh api "repos/$REPO")
+          stars=$(echo "$repo_json" | jq -r '.stargazers_count')
+          forks=$(echo "$repo_json" | jq -r '.forks_count')
+
+          views_json=$(gh api "repos/$REPO/traffic/views")
+          views_count=$(echo "$views_json" | jq -r '.count')
+          views_uniques=$(echo "$views_json" | jq -r '.uniques')
+
+          clones_json=$(gh api "repos/$REPO/traffic/clones")
+          clones_count=$(echo "$clones_json" | jq -r '.count')
+          clones_uniques=$(echo "$clones_json" | jq -r '.uniques')
+
+          date=$(date -u +%Y-%m-%d)
+          echo "row=$date,$stars,$forks,$views_count,$views_uniques,$clones_count,$clones_uniques" >> "$GITHUB_OUTPUT"
+
+      - name: Append snapshot
+        run: |
+          file=.github/metrics/stats.csv
+          if [ ! -f "$file" ]; then
+            echo "date,stars,forks,views_count,views_uniques,clones_count,clones_uniques" > "$file"
+          fi
+          echo "${{ steps.stats.outputs.row }}" >> "$file"
+
+      - name: Commit snapshot
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .github/metrics/stats.csv
+          git diff --cached --quiet && exit 0
+          git commit -m "chore: weekly repo metrics snapshot"
+          git push
