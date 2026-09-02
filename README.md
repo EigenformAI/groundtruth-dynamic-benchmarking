@@ -5,7 +5,7 @@ Evaluation is a two-stage process — there is no "compare while generating" mod
 
 1. **Generate** — ask a model every rubric question and save the raw answers. Repeat once per model you want to test (baseline, LoRA gen 1, ...) to get one answer file each.
 2. **Score** — hand the answers to the judge:
-   - **pointwise** (`--score FILE`) — one answer file, each answer scored 0–10 against the rubric on its own. One judge call per question. **This is what a published result is built from**: each model is graded once, independently, so the same answer cannot come back with two different scores.
+   - **pointwise** (`--score FILE`) — one answer file, each answer scored 0–10 against the rubric on its own. One judge call per question. Each model is graded once, independently, so the same answer cannot come back with two different scores.
    - **pairwise** (`--score FILE_A FILE_B`) — the same pointwise score for both files, plus an order-swapped A-vs-B preference verdict. Four judge calls per question. Use it when the question is "did the fine-tune beat the baseline", not "what is the score".
 
 ## Quick start
@@ -32,15 +32,15 @@ uv sync
 
 ```bash
 # generate (needs a running vLLM endpoint, or use start_eval.sh to get one)
-uv run python main.py --mode api --workers 2 --output output/answers-gen2.json
+uv run python main.py --mode api --workers 4 --output output/answers.json
 
 # score one answer file pointwise (no GPU needed)
-uv run python main.py --score output/answers-gen2.json --rubric <key> \
-  --label "gen2" --output output/scores-gen2.json
+uv run python main.py --score output/answers.json --rubric <key> \
+  --output output/scores.json
 
 # score two existing answer files against each other (pointwise + pairwise)
-uv run python main.py --score output/answers-gen2.json output/answers-base.json \
-  --output output/score-gen2-vs-base.json
+uv run python main.py --score output/answers.json output/answers-base.json \
+  --output output/score-vs-base.json
 ```
 
 ### The judge and the candidate are two different models
@@ -48,16 +48,16 @@ uv run python main.py --score output/answers-gen2.json output/answers-base.json 
 | | Judge | Candidate |
 |---|---|---|
 | What it does | grades answers against the rubric | answers the questions |
-| Set with | `--judge-model` / `JUDGE_MODEL` in `.env` | `--model` / `OPENCODE_MODEL`, or the `start_eval.sh` model menu |
+| Set with | fixed at `openai/gpt-5.5` in `main.py` | `--model` / `OPENCODE_MODEL`, or the `start_eval.sh` model menu |
 | Provider | OpenRouter | opencode → vLLM pod, or opencode → OpenRouter |
 | Key | `OPENROUTER_API_KEY` | `OPENROUTER_API_KEY` (shared), or none for a local pod |
 
 **Sampling settings differ by path, and one of them lives outside this repository.** The judge is always called with `temperature 0, top_p 1` from `main.py`. `--mode api` sends the same. But in **opencode mode — which includes every OpenRouter candidate — `main.py` sets nothing**: it shells out, and opencode samples according to its own config (`~/.config/opencode/opencode.json`, key `agent.build`). Two consequences worth knowing before you compare models:
 
 - A model that does not support a parameter never receives it. Captured from live requests: `google/gemini-3.5-flash-lite` and `deepseek/deepseek-v3.2` are sent `temperature: 0`, while `openai/gpt-5.4-nano` is sent **no temperature at all** — opencode substitutes `reasoningEffort` and `textVerbosity` for reasoning models. So answers from that family are not temperature-controlled, and repeat runs will vary.
-- Because the setting is opencode's, a different machine can produce different answers with no trace. Each generation run therefore records what was configured under `candidate_sampling` in `<output>.runs.jsonl`, together with the caveat that configured is not the same as applied.
+- Because the setting is opencode's, a different machine can produce different answers with no trace, and `main.py` cannot see what was applied.
 
-The judge is deliberately independent of the candidate: **one judge grades every model on every site**, whoever wrote the answers. Swapping judges mid-benchmark invalidates the comparison — a score is only meaningful against the other scores from the same grader — and letting a model grade its own answers invites self-preference. The judge id used, and the id OpenRouter resolved it to, are recorded on every scored entry (`judge_model`, `judge_model_resolved`) and in the run record, so a mixed-judge table is detectable rather than silent.
+The judge is deliberately independent of the candidate: **one judge grades every model on every site**, whoever wrote the answers. Swapping judges mid-benchmark invalidates the comparison — a score is only meaningful against the other scores from the same grader — and letting a model grade its own answers invites self-preference. The judge id is recorded in each run's record (`judge_model` in `<output>.runs.jsonl`), so a mixed-judge table is detectable rather than silent.
 
 ## Rubrics
 
@@ -82,25 +82,14 @@ Rubrics must be **schema 2.0** — the structured gate/component format defined 
 
 In opencode mode the candidate is an agent with file tools, and the rubric that grades it lives in this repository a couple of levels above the corpus. `opencode run --dir` sets a working directory; it is **not** a boundary, and an absolute path resolves straight past it. Left open, a candidate can read the marking scheme for the question it is answering — and the resulting answers look excellent, score well, and mean nothing.
 
-Three things close that, and they are independent on purpose:
+Two things close that, and they are independent on purpose:
 
-1. **The authoring skill is switched off for the candidate.** `OPENCODE_DISABLE_CLAUDE_CODE_SKILLS=1`, so a `.claude/skills/` directory in any enclosing folder is never offered. A benchmark-authoring skill tells an agent to inventory the existing artifacts first, which walks it straight to the grading key.
-2. **The tools that could reach out on their own are removed.** `bash`, `edit`, `write`, `skill`, `webfetch` and `websearch` are set to `deny` and passed to opencode through `OPENCODE_CONFIG_CONTENT` — which layers on top of your own opencode config rather than replacing it. A denied tool is dropped from the model's tool list entirely, so `bash` cannot be used to `cat` its way out and the run is genuinely closed-corpus rather than quietly web-assisted.
-3. **What actually happened is checked afterwards.** The first two are configuration — they assume something about how the installed opencode behaves, and an upgrade can change it quietly. `scripts/audit_transcripts.py` reads the transcripts main.py already saves and reports every tool call that landed outside the corpus, flagging reads of the rubric directory separately from ordinary wandering.
+1. **The authoring skill is switched off for the candidate.** `OPENCODE_DISABLE_CLAUDE_CODE_SKILLS=1`, so a `.claude/skills/` directory anywhere in opencode's search path is never auto-loaded. A benchmark-authoring skill tells an agent to inventory the existing artifacts first, which walks it straight to the grading key. This is not the same as mechanism 2: parking `.claude/` removes *this repository's* skill, the env var also covers one loaded from `~/.claude/` or a parent directory.
+2. **The answer key is taken off disk for the run.** `.claude/` and `rubrics/` are moved to a directory outside the repository before the first candidate call and moved back when the run exits — on a clean finish, on Ctrl-C, on `kill` (SIGTERM), and, after an outright SIGKILL, recovered on the next start. The harness reads the chosen rubric into memory up front and never re-opens the file, so the directory can be absent while the candidate works; scoring and `--check-rubric` never move anything.
 
-Subagents are deliberately **not** denied. A candidate spawning an `explore` agent over its corpus is the behaviour being measured — roughly 7.5 tool calls per question — and forbidding it would change what the benchmark reports.
+The candidate's tools are **not** otherwise restricted — the run is `--dangerously-skip-permissions`, and subagents, `bash` and `webfetch` are all available. A candidate spawning an `explore` agent over its corpus is the behaviour being measured — roughly 7.5 tool calls per question — and forbidding it would change what the benchmark reports. The fence is specifically around the answer key; it is not a general sandbox.
 
-**What this does not do, tested rather than assumed.** opencode's `permission.external_directory: "deny"` does **not** restrict paths in 1.16.2: a candidate reads an absolute path outside `--dir` regardless — with the bare string form, with `{"**": "deny"}`, and with `--dangerously-skip-permissions` both present and absent. There is therefore no path fence, only the removal of what leads a candidate to the answer key. A candidate that widens a search upward from the corpus can still reach `rubrics/`, and does: with every deny in place and no skill involved, a 50-question run read the grading key on 2 of them, having spawned an explore subagent over the whole workspace first. Item 3 is the backstop and fails closed at scoring time.
-
-**Staging the corpus outside the repository was tried and reverted.** It closed the walk, but generation collapsed with it: answers fell from a median of ~1,900 characters to ~100, with the model exploring until the 300s timeout and never writing one. See the note in `main.py` before attempting it again.
-
-```bash
-uv run python scripts/audit_transcripts.py output/answers-gen2.json
-```
-
-A generate run prints this audit when it finishes. **Scoring refuses to start when it fails** — before a single judge call is bought — because once a contaminated answer is scored nothing downstream can tell the difference. `--skip-audit` overrides it and says so loudly. A run made under isolation records the fact in `<output>.runs.jsonl` as `candidate_isolation`; its absence marks an answer file generated before any of this existed.
-
-None of this closes the corpus itself: rubrics declare `candidate_access_mode`, and `OPEN_CORPUS` means the candidate is *meant* to read the source documents. The fence is around the answer key, not the evidence.
+**Tested rather than assumed.** opencode's `permission.external_directory: "deny"` does **not** restrict paths in 1.16.2: a candidate reads an absolute path outside `--dir` regardless — with the bare string form, with `{"**": "deny"}`, and with `--dangerously-skip-permissions` both present and absent. There is no working path fence, so the directories are made absent instead. With only `.claude` parked, a 50-question run still reached `rubrics/` on 13 questions — having spawned an explore subagent over the whole workspace first — and had gate and reference-answer text in context on 8 of them; parking `rubrics/` as well is what closed it. The park directory sits one level above the repo, so a filesystem-wide search could in principle still reach it — only an OS sandbox is a true boundary.
 
 ### How the rubrics are built
 
@@ -313,9 +302,9 @@ special_constraints: "
   belongs in the working files."
 ```
 
-**One stop, and why that one.** The old workflow also stopped after every authoring batch; those reviews mostly confirmed what scripts can confirm, and their real catches — anchor errors, ID collisions, template fixtures — are now encoded as machine gates and skill rules. The blueprint stop stays because its catches were of a different kind: a section outside the declared scope, a lopsided allocation, evidence already spent by another section. A script sees a well-formed blueprint; only a reader sees a wrong one — and at the blueprint it costs ten minutes to fix what would otherwise cost a rebuild. Two passes after the build remain **not optional**, because neither the stop nor the gates can see how the rubric actually grades:
+**One stop, and why that one.** The old workflow also stopped after every authoring batch; those reviews mostly confirmed what scripts can confirm, and their real catches — anchor errors, ID collisions, template fixtures — are now encoded as machine gates and skill rules. The blueprint stop stays because its catches were of a different kind: a section outside the declared scope, a lopsided allocation, evidence already spent by another section. A script sees a well-formed blueprint; only a reader sees a wrong one — and at the blueprint it costs ten minutes to fix what would otherwise cost a rebuild. Two passes after the build remain **not optional**, because neither the stop nor the gates can see how the rubric actually grades. Both are manual — the harness ships no runner for either:
 
-1. **Independent fixture re-scoring**: run all 200 fixtures through the production judge from the marking blocks alone, and treat every mismatch as a rubric defect.
+1. **Independent fixture re-scoring**: every fixture carries the score its author predicted. Feed each fixture's answer text back through the production judge — the `main.py --score` path, one fixture per question at a time — and treat any disagreement with the predicted score as a rubric defect. The fix goes in the marking block, not the fixture. About 200 fixtures for a 50-question benchmark.
 2. **Independent geological review** of every item the validation document flags.
 
 **Re-run anchor verification whenever the corpus is re-extracted.** Anchors are placed inside a single line so a candidate's grep returns them, and changing the extraction moves every line boundary.
@@ -336,7 +325,7 @@ Every answer additionally gets an independent 0–10 score (`score_answer()`) ag
 
 All defaults land in `output/` (git-ignored):
 
-- `output/answers*.json` — generated answers; `output/scores*.json` — scores, including the per-component breakdown, adjudication flags, the judge identity, and the pairwise verdicts when two files were scored.
+- `output/answers*.json` — generated answers; `output/scores*.json` — scores, including the per-component breakdown, adjudication flags, and the pairwise verdicts when two files were scored. The judge id is in `<output>.runs.jsonl`.
 - `<output>.errors.json` — failed generations, retried automatically on the next run and removed from the file once the question succeeds.
 - `<output>.costs.jsonl` — one line per billed API call (see below); `<output>.runs.jsonl` — one line per run with its totals.
 - `output/cost_ledger.jsonl` — every billed call from every run, appended.
@@ -344,55 +333,30 @@ All defaults land in `output/` (git-ignored):
 
 Re-running with the same `--output` file **resumes**: completed question ids are skipped (matched by id *and* question text, so a stale file from a different rubric is never silently reused) and failed entries are retried. Generating, "completed" means a usable answer came back; scoring, it means the judge returned a score — an answer that was empty and scored 0 on the gate is finished, not unfinished, and is not re-bought on the next resume.
 
-## Calibration — test the rubric before you test models
+## Calibration fixtures
 
-```bash
-uv run python scripts/calibrate.py --rubric <key> --limit 8 \
-    --judge-model openai/gpt-5-nano        # cheap dry run first
-uv run python scripts/calibrate.py --rubric <key>          # the real pass
-```
-
-Every question in a rubric ships ~4 **calibration fixtures**: a fabricated candidate answer plus the score its author *predicted* the marking block would produce — a gate-fail near miss, a bare gate pass, a partial-credit boundary, a full answer.
-
-`scripts/calibrate.py` feeds each fixture's text through the same scoring path a real run uses and reports where the judge disagrees with the prediction. **It tests the rubric, not a model.** A gate worded ambiguously scores 0 for one grader and 8 for another; no model run would ever reveal that — it would surface as noise you'd wrongly attribute to the candidates. Run it *before* spending on real models, or the scores that come back do not mean what they appear to mean.
-
-The standard is the authoring skill's: gate disposition must match **exactly**; a determinate fixture must reproduce exact component awards and total; an explicitly judgmental fixture may vary by at most one point. Nothing in the schema marks which fixtures are judgmental, so the script will not decide that for you — an off-by-one with the gate agreeing is reported as `REVIEW`, everything else is `PASS` or `DEFECT`. Output is a defect list plus a JSON report; **a mismatch means the marking block needs revision, not the fixture.**
+Every question in a rubric ships ~4 **calibration fixtures**: a fabricated candidate answer paired with the score its author *predicted* the marking block would produce — a gate-fail near miss, a bare gate pass, a partial-credit boundary, a full answer. They pin down how the gate and each component are meant to behave at their boundaries, and they are the reference point when an ambiguous marking block needs revising. The harness does not execute them automatically.
 
 ## Cost logging
 
 Everything spent on the OpenRouter key is written down as it happens, so a run that dies halfway still leaves its spend on disk:
 
-- `<output>.costs.jsonl` — **one line per billed call**: timestamp, run id, `judge` or `candidate`, what it was for (`pointwise` / `pairwise` / `generate`), question id, model requested, model actually served, provider, generation id, prompt/completion/reasoning tokens, and cost in USD.
-- `<output>.runs.jsonl` — **one line per run**: judge id and service tier, candidate model, rubric, question count, per-question cost, and totals. Appended, so a resumed run adds a record rather than overwriting what the first attempt spent.
-- `output/cost_ledger.jsonl` — the same call records, appended across every run, for a single "what has this benchmark cost so far" view.
+- `<output>.costs.jsonl` — **one line per billed call**: timestamp, run id, `judge` or `candidate`, phase (`score` / `generate`), rubric, question id, model, prompt and completion tokens, cost in USD, and the output file.
+- `<output>.runs.jsonl` — **one line per run**: run id, task, rubric and rubric file, candidate model, judge id, service tier, the cost totals (judge / candidate / total, plus call counts), and a per-question cost breakdown. Appended, so a resumed run adds a record rather than overwriting what the first attempt spent.
+- `output/cost_ledger.jsonl` — the same per-call records, appended across every run, for a single "what has this benchmark cost so far" view.
 
 Judge and candidate spend are tracked separately and printed at the end of every run. A local vLLM candidate reports `$0` per token, correctly — that run is billed as GPU time on RunPod instead. An OpenRouter candidate reports real dollars per step.
 
 ### Estimating before you spend
 
-```bash
-uv run python scripts/estimate_cost.py --rubric <key> <key> ...
-uv run python scripts/estimate_cost.py --list gemini       # live ids + prices
-```
+`main.py` prints a **judge-cost** ballpark before a scoring run starts, priced against live OpenRouter rates and scaled to `--score-mode` (one pointwise call per answer file, plus two for the order-swapped pairwise verdict). The judge is well behaved — its prompt is the rubric plus one answer, so the token count barely moves between models.
 
-`scripts/estimate_cost.py` prices a planned run against **live OpenRouter rates**, fetched on every invocation — nothing about the pricing is hardcoded. Question counts come from the registered rubrics; `--pairwise`, `--runs` and `--no-flex` adjust the shape of the run.
-
-The two halves are not equally trustworthy, and the script says which is which:
-
-- **The judge** is well behaved — the prompt is the rubric plus one answer, so its token count barely moves. Defaults are taken from measured scoring runs.
-- **The candidate** is an agent loop, and every step re-sends the whole conversation, so the billed input for one question is the *sum of the context at every step*. Between a model that greps precisely and one that reads whole files, the same question can differ by more than 10×. Without measurements the script shows three labelled **assumption** profiles (lean / typical / heavy) whose only job is to bracket the answer.
-
-Collapse that uncertainty with a three-question probe, then feed the script the cost log the run wrote:
+The **candidate** is the half that is hard to predict: it is an agent loop, every step re-sends the whole conversation, and between a model that greps precisely and one that reads whole files the same question can cost more than 10× as much. Pin it down with a three-question probe and read the real per-question cost out of the `<output>.costs.jsonl` it writes:
 
 ```bash
 uv run python main.py --rubric <key> --ids 1 2 3 \
-    --model "openrouter/<id>" --label probe --output output/probe.json
-
-uv run python scripts/estimate_cost.py --from-run output/probe.costs.jsonl \
-    --rubric <key> <key> ... --models <id> <id> ...
+    --model "openrouter/<id>" --output output/probe.json
 ```
-
-The per-question token profile then comes from what actually happened — including real cache-read tokens — and is re-priced across every model you name at each one's current rate. `--json FILE` writes the same thing machine-readably.
 
 ## Google Sheets export
 
@@ -410,8 +374,8 @@ prompts.py         judge prompt templates
 start_eval.sh      interactive wrapper: pod lifecycle + eval + export
 configs/           models.json (model/LoRA registry), rubrics.json (rubric registry)
 rubrics/           question sets + grading keys (see Rubrics above)
-corpus/            source documents the sample rubric is grounded in
+corpus/            source documents the sample rubric is grounded in (only the Yudnamutana sample ships; other corpora are on Hugging Face)
 scripts/           convert_jsonl.py, export_sheets.py
-docs/              runpod.md — vLLM/RunPod setup notes
+docs/              leaderboard site served at benchmark.eigenform.ai, plus runpod.md (vLLM/RunPod setup notes)
 output/            (git-ignored) answers, scores, transcripts
 ```
