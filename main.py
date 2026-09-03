@@ -1,4 +1,4 @@
-"""Evaluate a fine-tuned (LoRA) Gemma model against a baseline on a fixed question set, using an LLM judge. See README.md for usage and docs/runpod.md for preparing the vLLM server on RunPod."""
+"""Evaluate a fine-tuned (LoRA) Gemma model against a baseline on a fixed question set, using an LLM judge. See README.md for usage and RUNPOD.md for preparing the vLLM server on RunPod."""
 
 import argparse
 import concurrent.futures

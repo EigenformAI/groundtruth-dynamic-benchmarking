@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+title: "Groundtruth Dynamic Benchmarking"
+message: "If you use this benchmark, its harness, or its rubrics, please cite it as below."
+type: software
+authors:
+  - name: "Eigenform"
+repository-code: "https://github.com/EigenformAI/groundtruth-dynamic-benchmarking"
+url: "https://eigenform.ai/benchmark"
+abstract: "Groundtruth Dynamic Benchmarking is an Earth Sciences AI benchmark: it evaluates how well large language models reason over real geoscience source material such as mineral-exploration reports, government geological archives, and technical filings. A candidate model answers a fixed question set drawn from primary records; an independent LLM judge grades every answer 0-10 against a calibrated, source-anchored rubric whose every claim carries a verbatim evidence locator. Geology is the first edition; the harness runs any schema-2.0 rubric. A public leaderboard hosts a model track and a harness track over three 50-question districts."
+keywords:
+  - "earth sciences AI"
+  - "geoscience"
+  - "LLM benchmark"
+  - "LLM evaluation"
+  - "LLM-as-judge"
+  - "rubric grading"
+  - "mineral exploration"
+  - "question answering"
+  - "retrieval-augmented generation"
+  - "fine-tuning"
+version: "1.1.0"
+date-released: "2026-09-02"
+license: MIT

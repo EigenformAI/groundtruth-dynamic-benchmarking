@@ -3,8 +3,54 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Groundtruth Geology Benchmark — Leaderboard</title>
+<title>Groundtruth Dynamic Benchmarking — Leaderboard</title>
+<meta name="description" content="Live leaderboard for Groundtruth Dynamic Benchmarking, an Earth Sciences AI benchmark that evaluates LLMs on reasoning over real geoscience source material. Model and harness tracks over three 50-question districts, graded 0–10 by an independent LLM judge against source-anchored rubrics.">
 <link rel="canonical" href="https://eigenform.ai/benchmark/">
+<link rel="icon" href="/benchmark/favicon-32x32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="/benchmark/favicon.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="/benchmark/apple-touch-icon.png">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Eigenform">
+<meta property="og:title" content="Groundtruth Dynamic Benchmarking — Leaderboard">
+<meta property="og:description" content="An Earth Sciences AI benchmark: LLMs answer questions drawn from primary geoscience records; an independent LLM judge grades every answer against a calibrated, source-anchored rubric. Model and harness tracks.">
+<meta property="og:url" content="https://eigenform.ai/benchmark/">
+<meta property="og:image" content="https://eigenform.ai/benchmark/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Groundtruth Dynamic Benchmarking — Leaderboard">
+<meta name="twitter:description" content="An Earth Sciences AI benchmark for LLMs on real geoscience reasoning. Model and harness tracks, graded by an independent LLM judge.">
+<meta name="twitter:image" content="https://eigenform.ai/benchmark/og.png">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Dataset",
+  "name": "Groundtruth Dynamic Benchmarking",
+  "alternateName": "Groundtruth — an Earth Sciences AI benchmark",
+  "description": "An Earth Sciences AI benchmark evaluating large language models on reasoning over real geoscience source material — mineral-exploration reports, government geological archives, and technical filings. A candidate model answers a fixed question set drawn from primary records; an independent LLM judge grades every answer 0–10 against a calibrated, source-anchored rubric. Geology is the first edition. A public leaderboard hosts a model track and a harness track over three 50-question districts.",
+  "url": "https://eigenform.ai/benchmark/",
+  "keywords": ["Earth Sciences AI", "geoscience", "LLM benchmark", "LLM evaluation", "LLM-as-judge", "question answering", "rubric grading"],
+  "license": "https://opensource.org/licenses/MIT",
+  "creator": {
+    "@type": "Organization",
+    "name": "Eigenform",
+    "url": "https://eigenform.ai"
+  },
+  "isAccessibleForFree": true,
+  "sameAs": [
+    "https://github.com/EigenformAI/groundtruth-dynamic-benchmarking",
+    "https://huggingface.co/datasets/EigenformAI/groundtruth-dynamic-benchmarking",
+    "https://huggingface.co/datasets/EigenformAI/groundtruth-dynamic-benchmarking-submissions"
+  ],
+  "distribution": [
+    {
+      "@type": "DataDownload",
+      "encodingFormat": "application/json",
+      "contentUrl": "https://huggingface.co/datasets/EigenformAI/groundtruth-dynamic-benchmarking"
+    }
+  ]
+}
+</script>
 <style>
   :root {
     --bg: #ffffff;
@@ -91,11 +137,11 @@
 </head>
 <body>
 <main>
-  <h1>Groundtruth Geology Benchmark — Leaderboard</h1>
+  <h1>Groundtruth Dynamic Benchmarking — Leaderboard</h1>
   <p class="lede">
     Self-reported pointwise rubric scores (0–10 per question) against the
     <a href="https://huggingface.co/datasets/EigenformAI/groundtruth-dynamic-benchmarking">groundtruth-dynamic-benchmarking</a>
-    geology rubrics. Every row here is read live from public datasets — nothing is hardcoded on this page.
+    geology rubrics, read live from public datasets. Nothing is hardcoded on this page.
   </p>
   <div class="links">
     <a href="https://huggingface.co/datasets/EigenformAI/groundtruth-dynamic-benchmarking">Benchmark dataset ↗</a>
