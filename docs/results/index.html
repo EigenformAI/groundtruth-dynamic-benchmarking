@@ -53,7 +53,7 @@
     font-family: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
     font-size: 15px; line-height: 1.55; margin: 0;
   }
-  .wrap { max-width: 1060px; margin: 0 auto; padding: 0 24px 96px; }
+  .wrap { max-width: 100%; margin: 0 auto; padding: 0 32px 96px; }
   .serif { font-family: "Source Serif 4", Georgia, "Times New Roman", serif; }
   .mono  { font-family: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace; }
   a { color: var(--accent); }
@@ -67,7 +67,10 @@
   h1 { font-family: "Source Serif 4", Georgia, serif; font-weight: 700;
        font-size: clamp(34px, 5.5vw, 52px); line-height: 1.04; margin: 0 0 12px;
        letter-spacing: -.01em; text-wrap: balance; }
-  .stand { color: var(--ink2); max-width: 62ch; margin: 0; font-size: 16px; }
+  .stand { color: var(--ink2); max-width: 100ch; margin: 0; font-size: 16px; }
+
+  .links { display: flex; flex-wrap: wrap; gap: 8px 28px; margin: 18px 0 0;
+           font-size: 14px; }
 
   .statstrip { display: flex; flex-wrap: wrap; gap: 0 36px; padding: 16px 0;
                border-bottom: 1px solid var(--rule); margin-bottom: 8px; }
@@ -83,8 +86,8 @@
            color: var(--accent); letter-spacing: .1em; }
   h2 { font-family: "Source Serif 4", Georgia, serif; font-weight: 600;
        font-size: 28px; margin: 6px 0 8px; letter-spacing: -.005em; text-wrap: balance; }
-  .lede { color: var(--ink2); max-width: 68ch; margin: 0 0 22px; }
-  .note { color: var(--muted); font-size: 13px; max-width: 74ch; margin: 12px 0 0; }
+  .lede { color: var(--ink2); max-width: 105ch; margin: 0 0 22px; }
+  .note { color: var(--muted); font-size: 13px; max-width: 110ch; margin: 12px 0 0; }
   .note b { color: var(--ink2); }
 
   .panel { background: var(--surface); border: 1px solid var(--border);
@@ -138,11 +141,11 @@
   #tip .t2 { opacity: .75; }
 
   .caveat { border-left: 3px solid var(--accent); padding: 2px 0 2px 14px;
-            color: var(--ink2); font-size: 13.5px; max-width: 70ch; margin: 16px 0 0; }
+            color: var(--ink2); font-size: 13.5px; max-width: 105ch; margin: 16px 0 0; }
 
   footer.method { margin-top: 72px; border-top: 1px solid var(--rule); padding-top: 24px; }
   footer.method h2 { font-size: 22px; }
-  footer.method li { margin: 0 0 10px; color: var(--ink2); max-width: 78ch; }
+  footer.method li { margin: 0 0 10px; color: var(--ink2); max-width: 110ch; }
   footer.method b { color: var(--ink); font-weight: 600; }
 
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
@@ -158,10 +161,12 @@
   <header>
     <p class="eyebrow">Source-grounded geology benchmark · August 2026</p>
     <h1>Three Districts</h1>
-    <p class="stand"><span id="nmodels">Six</span> frontier models answer 150 questions drawn from the primary
-    records of three mining districts — a modern NI 43-101 technical report, four
-    USGS district studies from 1924–27, and a Western Australian WAMEX archive.
-    Every answer is graded against a calibrated, source-anchored rubric.</p>
+    <p class="stand"><span id="nmodels">Six</span> frontier models answer 150 questions drawn from the primary records of three mining districts a modern NI 43-101 technical report, four USGS district studies from 1924–27, and a Western Australian WAMEX archive. Every answer is graded against a calibrated, source-anchored rubric.</p>
+  <div class="links">
+    <a href="https://eigenform.ai/benchmark/">Benchmark page ↗</a>
+    <a href="https://huggingface.co/datasets/EigenformAI/groundtruth-dynamic-benchmarking">Benchmark dataset ↗</a>
+    <a href="https://huggingface.co/datasets/EigenformAI/groundtruth-dynamic-benchmarking-submissions">Submit a result ↗</a>
+  </div>
   </header>
 
   <div class="statstrip" id="stats"></div>
@@ -170,10 +175,7 @@
   <section id="s1">
     <span class="secno">01</span>
     <h2>Tiers, not ranks</h2>
-    <p class="lede">Mean score per question with a bootstrap 95% confidence interval.
-    Where intervals overlap, the benchmark cannot order the models — and it says so.
-    The models split into tiers, and only the boundary between tiers survives
-    testing — the exact order inside a tier is not a claim.</p>
+    <p class="lede">Mean score per question with a bootstrap 95% confidence interval. Where intervals overlap, the benchmark cannot order the models and it says so. The models split into tiers, and only the boundary between tiers survives testing the exact order inside a tier is not a claim.</p>
     <div class="panel"><div class="scroller"><div id="tier"></div></div></div>
     <div class="panel">
       <p class="paneltitle">Per district</p>
@@ -189,19 +191,14 @@
   <section id="s2">
     <span class="secno">02</span>
     <h2>Three corpora, three orderings</h2>
-    <p class="lede">The top tier holds its shape on every corpus. The bottom tier does
-    not: its order depends on which district is asking the questions — which is exactly
-    why this benchmark measures three of them instead of one.</p>
+    <p class="lede">The top tier holds its shape on every corpus. The bottom tier does not: its order depends on which district is asking the questions which is exactly why this benchmark measures three of them instead of one.</p>
     <div class="panel"><div class="scroller"><div id="slope"></div></div></div>
   </section>
 
   <section id="s3">
     <span class="secno">03</span>
     <h2>Price and performance</h2>
-    <p class="lede">What it cost to run each model through all 150 questions, against
-    what it scored. Cost counts only the run that produced each surviving answer, plus
-    judging. Models on the dotted frontier are unbeaten on both axes at once; muted
-    models are dominated — something else is better and cheaper.</p>
+    <p class="lede">What it cost to run each model through all 150 questions, against what it scored. Cost counts only the run that produced each surviving answer, plus judging. Models on the dotted frontier are unbeaten on both axes at once; muted models are dominated something else is better and cheaper.</p>
     <div class="panel"><div class="scroller"><div id="pareto"></div></div></div>
     <div class="panel">
       <p class="paneltitle">Cost per question</p>
@@ -212,10 +209,7 @@
   <section id="s4">
     <span class="secno">04</span>
     <h2>Question by question</h2>
-    <p class="lede">Every model's grade on every question, one row per question, sorted by how far
-    the models spread. Rows at the top separate models; uniform rows at the bottom
-    are questions every model handled identically. A red × is a failed gate — an answer
-    wrong about the one thing the question exists to test, scored zero.</p>
+    <p class="lede">Every model's grade on every question, one row per question, sorted by how far the models spread. Rows at the top separate models; uniform rows at the bottom are questions every model handled identically. A red × is a failed gate an answer wrong about the one thing the question exists to test, scored zero.</p>
     <div class="panel">
       <div class="tabs" role="tablist" id="heattabs"></div>
       <div class="scroller"><div id="heat"></div></div>
@@ -226,10 +220,7 @@
   <section id="s5">
     <span class="secno">05</span>
     <h2>Does harder mean harder?</h2>
-    <p class="lede">Mean score by the questions' authored difficulty band. Two districts
-    behave: scores sag as questions get harder and the models spread further apart.
-    The third does not — and that is a finding about the labels, reported rather than
-    hidden.</p>
+    <p class="lede">Mean score by the questions' authored difficulty band. Two districts behave: scores sag as questions get harder and the models spread further apart. The third does not and that is a finding about the labels, reported rather than hidden.</p>
     <div class="panel"><div class="scroller"><div id="diffc"></div></div></div>
     <p class="caveat" id="diffcaveat"></p>
   </section>
@@ -237,27 +228,19 @@
   <section id="s6">
     <span class="secno">06</span>
     <h2>How they work</h2>
-    <p class="lede">Effort is not cost, and neither is score. Bubble area is total spend:
-    the hardest-working model is mid-table, the biggest spender searched least, and the
-    runner-up got there on the fewest moves of the leading three.</p>
+    <p class="lede">Effort is not cost, and neither is score. Bubble area is total spend: the hardest-working model is mid-table, the biggest spender searched least, and the runner-up got there on the fewest moves of the leading three.</p>
     <div class="panel"><div class="scroller"><div id="bubbles"></div></div></div>
     <div class="panel">
       <p class="paneltitle">Tool mix — share of each model's calls</p>
       <div class="scroller"><div id="toolmix"></div></div>
     </div>
-    <p class="note">Tool calls are counted from each question's saved transcript — only
-    the run that produced the surviving answer. Two models occasionally delegate to a
-    sub-agent (<span class="mono">task</span>), whose internal searches are not counted,
-    so their effort is slightly understated.</p>
+    <p class="note">Tool calls are counted from each question's saved transcript only the run that produced the surviving answer. Two models occasionally delegate to a sub-agent (<span class="mono">task</span>), whose internal searches are not counted, so their effort is slightly understated.</p>
   </section>
 
   <section id="s7">
     <span class="secno">07</span>
     <h2>How finely it measures</h2>
-    <p class="lede">A benchmark is only as good as the smallest difference it can
-    detect. Each district is summarised by its top-to-bottom range, the minimum
-    gap distinguishable from noise at fifty questions, and how many distinct
-    levels fit between the two.</p>
+    <p class="lede">A benchmark is only as good as the smallest difference it can detect. Each district is summarised by its top-to-bottom range, the minimum gap distinguishable from noise at fifty questions, and how many distinct levels fit between the two.</p>
     <div class="panel">
       <p class="paneltitle">Resolution — how finely each district separates models</p>
       <div class="scroller"><div id="restable"></div></div>
@@ -267,10 +250,7 @@
   <section id="s8">
     <span class="secno">08</span>
     <h2>What it cost</h2>
-    <p class="lede">Generation (the model exploring the corpus and writing) dwarfs
-    judging, and varies six-fold between models doing the same task. The strip below
-    shows every question's cost: some models spend evenly, others are dominated by a
-    few runaway explorations.</p>
+    <p class="lede">Generation (the model exploring the corpus and writing) dwarfs judging, and varies six-fold between models doing the same task. The strip below shows every question's cost: some models spend evenly, others are dominated by a few runaway explorations.</p>
     <div class="panel"><div class="scroller"><div id="costbars"></div></div></div>
     <div class="panel">
       <p class="paneltitle">Every question's generation cost (log scale)</p>
@@ -335,9 +315,8 @@
 
   function bounds(vals, pad, step) {
     step = step || 0.5;
-    const lo = Math.floor((Math.min(...vals) - pad) / step) * step;
-    const hi = Math.ceil((Math.max(...vals) + pad) / step) * step;
-    return [lo, hi];
+    return [Math.floor((Math.min(...vals) - pad) / step) * step,
+            Math.ceil((Math.max(...vals) + pad) / step) * step];
   }
   function ticks(lo, hi, step) {
     const out = [];
@@ -356,6 +335,12 @@
     if (parent) parent.appendChild(n);
     return n;
   }
+  function chartW(id, fallback) {
+    const host = document.getElementById(id);
+    const w = host ? Math.floor(host.getBoundingClientRect().width) : 0;
+    return Math.max(fallback, w || fallback);
+  }
+
   function svgIn(id, w, h) {
     const host = document.getElementById(id);
     const s = el("svg", { viewBox: `0 0 ${w} ${h}`, width: "100%", role: "img" });
@@ -400,7 +385,7 @@
 
   /* ---------- 01 tier chart ---------- */
   (function () {
-    const W = 960, rowH = 46, padL = 190, padR = 130, padT = 26, padB = 8;
+    const W = chartW("tier", 960), rowH = 46, padL = 190, padR = 130, padT = 26, padB = 8;
     const H = padT + KEYS.length * rowH + padB;
     const [lo, hi] = bounds(ALLCI, 0.05, 0.5);
     const x = v => padL + (v - lo) / (hi - lo) * (W - padL - padR);
@@ -441,7 +426,7 @@
 
   /* ---------- 01b per-site small multiples ---------- */
   (function () {
-    const PW = 320, padL = 30, padR = 60, padT = 30, rowH = 34;
+    const PW = Math.floor(chartW("tiersmall", 960) / 3), padL = 30, padR = 60, padT = 30, rowH = 34;
     const PH = padT + KEYS.length * rowH + 26;
     const W = PW * 3;
     const svg = svgIn("tiersmall", W, PH);
@@ -484,7 +469,7 @@
 
   /* ---------- 02 slopegraph ---------- */
   (function () {
-    const W = 960, H = 400, padL = 170, padR = 170, padT = 34, padB = 30;
+    const W = chartW("slope", 960), H = 400, padL = 170, padR = 170, padT = 34, padB = 30;
     const svg = svgIn("slope", W, H);
     const xs = SITES.map((_, i) => padL + i * (W - padL - padR) / (SITES.length - 1));
     const [lo, hi] = bounds(ALLSITE, 0.05, 0.5);
@@ -529,7 +514,7 @@
 
   /* ---------- 03 pareto ---------- */
   (function () {
-    const W = 960, H = 430, padL = 64, padR = 40, padT = 40, padB = 46;
+    const W = chartW("pareto", 960), H = 430, padL = 64, padR = 40, padT = 40, padB = 46;
     const svg = svgIn("pareto", W, H);
     const P = DATA.pareto;
     const free = P.filter(p => p.freeGen);
@@ -592,7 +577,7 @@
 
   /* ---------- 03b cost per question bars ---------- */
   (function () {
-    const W = 960, rowH = 34, padL = 190, padR = 165, padT = 8;
+    const W = chartW("cpq", 960), rowH = 34, padL = 190, padR = 165, padT = 8;
     const P = [...DATA.pareto].sort((a, b) => a.cost - b.cost);
     const H = padT + P.length * rowH + 6;
     const svg = svgIn("cpq", W, H);
@@ -624,7 +609,7 @@
     function render(sk) {
       host.innerHTML = "";
       const rows = DATA.questions[sk];
-      const W = 960, padL = 64, cellH = 15, gap = 2, padT = 26;
+      const W = chartW("heat", 960), padL = 64, cellH = 15, gap = 2, padT = 26;
       const cellW = Math.floor((W - padL - 156) / KEYS.length);
       const spreadX = padL + KEYS.length * cellW + 24;
       const H = padT + rows.length * cellH + 8;
@@ -679,7 +664,7 @@
 
   /* ---------- 05 difficulty curves ---------- */
   (function () {
-    const PW = 320, PH = 260, W = PW * 3, padL = 34, padR = 16, padT = 30, padB = 34;
+    const PW = Math.floor(chartW("diffc", 960) / 3), PH = 260, W = PW * 3, padL = 34, padR = 16, padT = 30, padB = 34;
     const svg = svgIn("diffc", W, PH);
     const bands = ["Easy", "Moderate", "Hard", "Expert"];
     const dvals = [];
@@ -729,7 +714,7 @@
 
   /* ---------- 06 bubbles ---------- */
   (function () {
-    const W = 960, H = 420, padL = 60, padR = 40, padT = 36, padB = 46;
+    const W = chartW("bubbles", 960), H = 420, padL = 60, padR = 40, padT = 36, padB = 46;
     const svg = svgIn("bubbles", W, H);
     const E = DATA.effort;
     const xmax = Math.max(...E.map(e => e.calls)) * 1.18;
@@ -763,7 +748,7 @@
 
   /* ---------- 06b tool mix ---------- */
   (function () {
-    const W = 960, rowH = 36, padL = 190, padR = 20, padT = 26;
+    const W = chartW("toolmix", 960), rowH = 36, padL = 190, padR = 20, padT = 26;
     const tools = DATA.tools.filter(t => KEYS.some(m => DATA.toolmix[m][t] >= 0.5));
     const H = padT + KEYS.length * rowH + 30;
     const svg = svgIn("toolmix", W, H);
@@ -815,7 +800,7 @@
 
   /* ---------- 08 cost bars ---------- */
   (function () {
-    const W = 960, rowH = 40, padL = 190, padR = 120, padT = 8;
+    const W = chartW("costbars", 960), rowH = 40, padL = 190, padR = 120, padT = 8;
     const P = [...DATA.pareto].sort((a, b) => b.cost - a.cost);
     const H = padT + P.length * rowH + 6;
     const svg = svgIn("costbars", W, H);
@@ -839,7 +824,7 @@
   /* ---------- 08b cost strip ---------- */
   (function () {
     const SKEYS = KEYS;   // every model gets a row; free-tier ones get a note
-    const W = 960, rowH = 34, padL = 190, padR = 80, padT = 24;
+    const W = chartW("strip", 960), rowH = 34, padL = 190, padR = 80, padT = 24;
     const H = padT + SKEYS.length * rowH + 26;
     const svg = svgIn("strip", W, H);
     let lo = Infinity, hi = 0;
