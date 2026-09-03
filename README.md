@@ -159,6 +159,29 @@ docs/              the leaderboard site (benchmark.eigenform.ai) and its assets
 output/            (git-ignored) answers, scores, transcripts, cost ledger
 ```
 
+## FAQ
+
+**Is this only for geology?**
+The eval harness runs any schema-2.0 rubric. Geology is the first edition; the rubric-authoring skill is geoscience-tuned today and structured to extend to other earth-science domains.
+
+**How do I get my model or harness on the leaderboard?**
+Score it with this harness, then open a pull request against the [submissions dataset](https://huggingface.co/datasets/EigenformAI/groundtruth-dynamic-benchmarking-submissions). Full steps in [Get on the leaderboard](#get-on-the-leaderboard).
+
+**Are leaderboard results independently verified?**
+No. They are self-reported. The leaderboard flags rows whose question ids do not match the named rubric rather than hiding them, and every row links back to something reproducible.
+
+**Why a single fixed judge?**
+A score is only meaningful against other scores from the same grader. Swapping judges mid-benchmark invalidates the comparison, and letting a model grade its own answers invites self-preference. The judge id (`openai/gpt-5.5`) is recorded in every run.
+
+**Can the model being tested read its own answer key?**
+In opencode mode the candidate is an agent with file tools, so two independent measures move `.claude/` and `rubrics/` off disk for the duration of a run. See [Running the benchmark safely](#running-the-benchmark-safely) and [`AUTHORING.md`](AUTHORING.md#answer-key-isolation).
+
+**What does a run cost?**
+The judge is cheap and predictable. The candidate is an agent loop and can vary more than 10x between models, so probe three questions first and read the real per-question cost. See [Cost](#cost).
+
+**Can I build a rubric for my own corpus or domain?**
+Yes. See [`AUTHORING.md`](AUTHORING.md). Corpora must be openly licensed, and every rubric claim needs a verbatim evidence locator into that corpus.
+
 ## Related
 
 Groundtruth is a project of [**Eigenform**](https://github.com/EigenformAI).
