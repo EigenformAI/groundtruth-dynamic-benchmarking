@@ -53,7 +53,7 @@
     font-family: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
     font-size: 15px; line-height: 1.55; margin: 0;
   }
-  .wrap { max-width: 100%; margin: 0 auto; padding: 0 32px 96px; }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 0 24px 96px; }
   .serif { font-family: "Source Serif 4", Georgia, "Times New Roman", serif; }
   .mono  { font-family: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace; }
   a { color: var(--accent); }
@@ -67,7 +67,7 @@
   h1 { font-family: "Source Serif 4", Georgia, serif; font-weight: 700;
        font-size: clamp(34px, 5.5vw, 52px); line-height: 1.04; margin: 0 0 12px;
        letter-spacing: -.01em; text-wrap: balance; }
-  .stand { color: var(--ink2); max-width: 100ch; margin: 0; font-size: 16px; }
+  .stand { color: var(--ink2); max-width: 62ch; margin: 0; font-size: 16px; }
 
   .links { display: flex; flex-wrap: wrap; gap: 8px 28px; margin: 18px 0 0;
            font-size: 14px; }
@@ -86,8 +86,8 @@
            color: var(--accent); letter-spacing: .1em; }
   h2 { font-family: "Source Serif 4", Georgia, serif; font-weight: 600;
        font-size: 28px; margin: 6px 0 8px; letter-spacing: -.005em; text-wrap: balance; }
-  .lede { color: var(--ink2); max-width: 105ch; margin: 0 0 22px; }
-  .note { color: var(--muted); font-size: 13px; max-width: 110ch; margin: 12px 0 0; }
+  .lede { color: var(--ink2); max-width: 68ch; margin: 0 0 22px; }
+  .note { color: var(--muted); font-size: 13px; max-width: 74ch; margin: 12px 0 0; }
   .note b { color: var(--ink2); }
 
   .panel { background: var(--surface); border: 1px solid var(--border);
@@ -141,11 +141,11 @@
   #tip .t2 { opacity: .75; }
 
   .caveat { border-left: 3px solid var(--accent); padding: 2px 0 2px 14px;
-            color: var(--ink2); font-size: 13.5px; max-width: 105ch; margin: 16px 0 0; }
+            color: var(--ink2); font-size: 13.5px; max-width: 70ch; margin: 16px 0 0; }
 
   footer.method { margin-top: 72px; border-top: 1px solid var(--rule); padding-top: 24px; }
   footer.method h2 { font-size: 22px; }
-  footer.method li { margin: 0 0 10px; color: var(--ink2); max-width: 110ch; }
+  footer.method li { margin: 0 0 10px; color: var(--ink2); max-width: 78ch; }
   footer.method b { color: var(--ink); font-weight: 600; }
 
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
@@ -163,7 +163,7 @@
     <h1>Three Districts</h1>
     <p class="stand"><span id="nmodels">Six</span> frontier models answer 150 questions drawn from the primary records of three mining districts a modern NI 43-101 technical report, four USGS district studies from 1924–27, and a Western Australian WAMEX archive. Every answer is graded against a calibrated, source-anchored rubric.</p>
   <div class="links">
-    <a href="https://eigenform.ai/benchmark/">Benchmark page ↗</a>
+    <a href="/benchmark/">Benchmark page ↗</a>
     <a href="https://huggingface.co/datasets/EigenformAI/groundtruth-dynamic-benchmarking">Benchmark dataset ↗</a>
     <a href="https://huggingface.co/datasets/EigenformAI/groundtruth-dynamic-benchmarking-submissions">Submit a result ↗</a>
   </div>
@@ -335,12 +335,6 @@
     if (parent) parent.appendChild(n);
     return n;
   }
-  function chartW(id, fallback) {
-    const host = document.getElementById(id);
-    const w = host ? Math.floor(host.getBoundingClientRect().width) : 0;
-    return Math.max(fallback, w || fallback);
-  }
-
   function svgIn(id, w, h) {
     const host = document.getElementById(id);
     const s = el("svg", { viewBox: `0 0 ${w} ${h}`, width: "100%", role: "img" });
@@ -385,7 +379,7 @@
 
   /* ---------- 01 tier chart ---------- */
   (function () {
-    const W = chartW("tier", 960), rowH = 46, padL = 190, padR = 130, padT = 26, padB = 8;
+    const W = 960, rowH = 46, padL = 190, padR = 130, padT = 26, padB = 8;
     const H = padT + KEYS.length * rowH + padB;
     const [lo, hi] = bounds(ALLCI, 0.05, 0.5);
     const x = v => padL + (v - lo) / (hi - lo) * (W - padL - padR);
@@ -426,7 +420,7 @@
 
   /* ---------- 01b per-site small multiples ---------- */
   (function () {
-    const PW = Math.floor(chartW("tiersmall", 960) / 3), padL = 30, padR = 60, padT = 30, rowH = 34;
+    const PW = 320, padL = 30, padR = 60, padT = 30, rowH = 34;
     const PH = padT + KEYS.length * rowH + 26;
     const W = PW * 3;
     const svg = svgIn("tiersmall", W, PH);
@@ -469,7 +463,7 @@
 
   /* ---------- 02 slopegraph ---------- */
   (function () {
-    const W = chartW("slope", 960), H = 400, padL = 170, padR = 170, padT = 34, padB = 30;
+    const W = 960, H = 400, padL = 170, padR = 170, padT = 34, padB = 30;
     const svg = svgIn("slope", W, H);
     const xs = SITES.map((_, i) => padL + i * (W - padL - padR) / (SITES.length - 1));
     const [lo, hi] = bounds(ALLSITE, 0.05, 0.5);
@@ -514,7 +508,7 @@
 
   /* ---------- 03 pareto ---------- */
   (function () {
-    const W = chartW("pareto", 960), H = 430, padL = 64, padR = 40, padT = 40, padB = 46;
+    const W = 960, H = 430, padL = 64, padR = 40, padT = 40, padB = 46;
     const svg = svgIn("pareto", W, H);
     const P = DATA.pareto;
     const free = P.filter(p => p.freeGen);
@@ -577,7 +571,7 @@
 
   /* ---------- 03b cost per question bars ---------- */
   (function () {
-    const W = chartW("cpq", 960), rowH = 34, padL = 190, padR = 165, padT = 8;
+    const W = 960, rowH = 34, padL = 190, padR = 165, padT = 8;
     const P = [...DATA.pareto].sort((a, b) => a.cost - b.cost);
     const H = padT + P.length * rowH + 6;
     const svg = svgIn("cpq", W, H);
@@ -609,7 +603,7 @@
     function render(sk) {
       host.innerHTML = "";
       const rows = DATA.questions[sk];
-      const W = chartW("heat", 960), padL = 64, cellH = 15, gap = 2, padT = 26;
+      const W = 960, padL = 64, cellH = 15, gap = 2, padT = 26;
       const cellW = Math.floor((W - padL - 156) / KEYS.length);
       const spreadX = padL + KEYS.length * cellW + 24;
       const H = padT + rows.length * cellH + 8;
@@ -664,7 +658,7 @@
 
   /* ---------- 05 difficulty curves ---------- */
   (function () {
-    const PW = Math.floor(chartW("diffc", 960) / 3), PH = 260, W = PW * 3, padL = 34, padR = 16, padT = 30, padB = 34;
+    const PW = 320, PH = 260, W = PW * 3, padL = 34, padR = 16, padT = 30, padB = 34;
     const svg = svgIn("diffc", W, PH);
     const bands = ["Easy", "Moderate", "Hard", "Expert"];
     const dvals = [];
@@ -714,7 +708,7 @@
 
   /* ---------- 06 bubbles ---------- */
   (function () {
-    const W = chartW("bubbles", 960), H = 420, padL = 60, padR = 40, padT = 36, padB = 46;
+    const W = 960, H = 420, padL = 60, padR = 40, padT = 36, padB = 46;
     const svg = svgIn("bubbles", W, H);
     const E = DATA.effort;
     const xmax = Math.max(...E.map(e => e.calls)) * 1.18;
@@ -748,7 +742,7 @@
 
   /* ---------- 06b tool mix ---------- */
   (function () {
-    const W = chartW("toolmix", 960), rowH = 36, padL = 190, padR = 20, padT = 26;
+    const W = 960, rowH = 36, padL = 190, padR = 20, padT = 26;
     const tools = DATA.tools.filter(t => KEYS.some(m => DATA.toolmix[m][t] >= 0.5));
     const H = padT + KEYS.length * rowH + 30;
     const svg = svgIn("toolmix", W, H);
@@ -800,7 +794,7 @@
 
   /* ---------- 08 cost bars ---------- */
   (function () {
-    const W = chartW("costbars", 960), rowH = 40, padL = 190, padR = 120, padT = 8;
+    const W = 960, rowH = 40, padL = 190, padR = 120, padT = 8;
     const P = [...DATA.pareto].sort((a, b) => b.cost - a.cost);
     const H = padT + P.length * rowH + 6;
     const svg = svgIn("costbars", W, H);
@@ -824,7 +818,7 @@
   /* ---------- 08b cost strip ---------- */
   (function () {
     const SKEYS = KEYS;   // every model gets a row; free-tier ones get a note
-    const W = chartW("strip", 960), rowH = 34, padL = 190, padR = 80, padT = 24;
+    const W = 960, rowH = 34, padL = 190, padR = 80, padT = 24;
     const H = padT + SKEYS.length * rowH + 26;
     const svg = svgIn("strip", W, H);
     let lo = Infinity, hi = 0;
