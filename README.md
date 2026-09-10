@@ -1,6 +1,19 @@
 # Groundtruth Dynamic Benchmarking
 
-**An Earth Sciences AI benchmark.** Groundtruth evaluates how well LLMs reason over **real geoscience source material** (mineral-exploration reports, government geological archives, technical filings), not textbook recall. A candidate model answers a fixed question set; an independent LLM judge grades every answer 0–10 against a calibrated, source-anchored rubric. Questions and grading keys are authored from openly licensed primary records, so every rubric claim carries an evidence locator rather than resting on invented geology.
+**An Earth Sciences AI benchmark.** Groundtruth is a domain-specific LLM benchmark for **geological reasoning**: it evaluates how well AI models reason over **real geoscience source material** (mineral-exploration reports, government geological archives, technical filings), not textbook recall. A candidate model answers a fixed question set; an independent LLM judge grades every answer 0–10 against a calibrated, source-anchored rubric. Questions and grading keys are authored from openly licensed primary records, so every rubric claim carries an evidence locator rather than resting on invented geology.
+
+The pipeline: a geoscience source corpus becomes benchmark questions and source-anchored rubrics; a candidate model answers them; an independent judge model grades each answer 0–10; the scores feed the leaderboard.
+
+```mermaid
+flowchart LR
+    A["Source corpus"] --> B["Benchmark questions<br/>+ source-anchored rubrics"]
+    B --> C["Candidate LLM<br/>answers every question"]
+    C --> D["Independent LLM judge<br/>grades 0–10 vs the rubric"]
+    D --> E["Scores<br/>per question · per district"]
+    E --> F["Leaderboard<br/>eigenform.ai/benchmark"]
+```
+
+**Dynamic, not a fixed question bank.** Because every question and rubric is generated from a source corpus rather than hand-written once, the benchmark can be refreshed or extended as new records become available, and a leaked question can be regenerated instead of retired. That is the "dynamic" in dynamic benchmarking.
 
 **Geology is the first edition.** The eval harness (`main.py`) is domain-agnostic: it runs any schema-2.0 rubric. The authoring skill that turns a source corpus into a rubric is written for the geosciences today, and structured to extend to other earth-science domains.
 
@@ -12,15 +25,23 @@
 | **Rubric authoring** | [`AUTHORING.md`](AUTHORING.md) |
 | **Contributing** | [`CONTRIBUTING.md`](CONTRIBUTING.md) |
 
+**Where models stand today:** the leading tier — Kimi K3, Claude Sonnet 5, GPT‑5.6 Sol and OxAlpha — scores 8.4–8.8 / 10 on the source-grounded rubrics and is statistically tied; GLM 4.7 trails the field at 6.8. [See the full leaderboard →](https://eigenform.ai/benchmark)
+
 ---
 
-## Why it exists
+## What is Groundtruth?
 
-Most LLM benchmarks in the geosciences test recall of facts already in the training data. Groundtruth tests something harder: can a model read the primary record for a district it has never seen (assay tables, drill logs, resource statements, cross-cutting stratigraphy) and answer a domain expert's question about it, with the evidence to back it up?
+Groundtruth Dynamic Benchmarking is an open-source AI benchmark for geological reasoning. It measures whether a language model can read primary geological records it has not seen — the reports, drill logs and government archives used in real mineral exploration — and answer questions about them with evidence, rather than recite geology from its training data. Every answer is graded 0–10 by an independent LLM judge against a rubric in which each claim is anchored to a cited source passage.
 
-That makes it a signal for:
+## Why dynamic, domain-specific benchmarking
 
-- **fine-tuned earth-science models:** does the adapter add domain reasoning, or just style?
+Most LLM benchmarks in the geosciences test recall of facts already in the training data. Groundtruth tests something harder: can a model read the primary record for a district it has never seen (assay tables, drill logs, resource statements, cross-cutting stratigraphy) and answer a domain expert's question about it, with the evidence to back it up? And because every question and rubric is generated from a source corpus rather than fixed, the set can be refreshed as the record grows.
+
+## Use cases
+
+Groundtruth is built for anyone measuring AI for geology: AI/ML researchers running LLM evaluation, geoscientists assessing AI for mineral exploration and mining, and teams building domain-specific AI systems. Concretely, it is a signal for:
+
+- **fine-tuned earth-science models:** does the adapter add geological reasoning, or just style?
 - **retrieval and agent harnesses:** the harness track fixes the model, so the only variable is your scaffolding.
 - **frontier-model selection** for geoscience work: the model track ranks frontier models on the same rubrics.
 
@@ -33,7 +54,11 @@ Two stages, run separately. There is no "compare while generating" mode:
    - **pointwise** (`--score FILE`): each answer graded 0–10 against the rubric on its own, one judge call per question. This is what a leaderboard column is built from. A model is graded once, so the same answer cannot come back with two different scores.
    - **pairwise** (`--score FILE_A FILE_B`): pointwise for both files, plus an order-swapped A-vs-B preference verdict (four judge calls per question). Use it for "did the fine-tune beat the baseline", not "what is the score".
 
-The judge is a separate, fixed model (`openai/gpt-5.5`), deliberately independent of the candidate: one judge grades every model on every site. Its id is recorded in every run, so a mixed-judge table is detectable rather than silent. [More on scoring ↓](#how-scoring-works)
+The judge is a separate, fixed model (`openai/gpt-5.5`), deliberately independent of the candidate: one judge grades every model on every site. Its id is recorded in every run, so a mixed-judge table is detectable rather than silent. [More on scoring ↓](#methodology)
+
+## Results
+
+The live leaderboard at [eigenform.ai/benchmark](https://eigenform.ai/benchmark) ranks frontier models and harnesses over three 50-question districts, reading the Hugging Face submissions dataset directly. As of the latest run the top tier — Kimi K3, Claude Sonnet 5, GPT‑5.6 Sol and OxAlpha — is statistically tied at 8.4–8.8 / 10; where confidence intervals overlap the benchmark reports a tier rather than a strict rank.
 
 ## Quick start
 
@@ -86,9 +111,9 @@ To submit:
 
 Full field reference and the harness-track rules are in the [submissions dataset README](https://huggingface.co/datasets/EigenformAI/groundtruth-dynamic-benchmarking-submissions); see also [`CONTRIBUTING.md`](CONTRIBUTING.md). Submissions are self-reported and not independently re-run. The leaderboard flags mismatched question ids rather than hiding them.
 
-## Rubrics
+## Benchmark data: rubrics and corpora
 
-A rubric file is both the **question set** (generate mode reads the questions from it) and the **grading key** (score mode feeds its gate / component criteria to the judge). Available rubrics are registered in [`configs/rubrics.json`](configs/rubrics.json), which both `--rubric` and the `start_eval.sh` menu read; `--rubric` also accepts a path directly for a one-off run.
+The benchmark data is two [Hugging Face datasets](https://huggingface.co/datasets/EigenformAI/groundtruth-dynamic-benchmarking) — the rubrics (questions plus grading keys) and the submissions (model answer sets and scores). A rubric file is both the **question set** (generate mode reads the questions from it) and the **grading key** (score mode feeds its gate / component criteria to the judge). Available rubrics are registered in [`configs/rubrics.json`](configs/rubrics.json), which both `--rubric` and the `start_eval.sh` menu read; `--rubric` also accepts a path directly for a one-off run.
 
 `example` is a three-question sample over the **Yudnamutana Copper** district of South Australia: 34 mineral-deposit records extracted from the SA Geodata / SARIG Data Package (Geological Survey of South Australia, CC BY 4.0 AU; attribution and the exact extraction in [`corpus/yudnamutana/ATTRIBUTION.md`](corpus/yudnamutana/ATTRIBUTION.md)). It is the only rubric whose corpus ships in the repo. The three 50-question leaderboard rubrics (Technical / WAMEX / USGS) and their corpora live on Hugging Face.
 
@@ -104,7 +129,7 @@ In opencode mode the candidate is an agent with file tools, and the rubric that 
 
 The model menu in `start_eval.sh` is defined in [`configs/models.json`](configs/models.json). Add an entry to benchmark your own base model or LoRA adapter. Each entry carries a `provider` field (`vllm` default, or `openrouter`). Field reference and vLLM details are in [`RUNPOD.md`](RUNPOD.md).
 
-## How scoring works
+## Methodology
 
 Pointwise scoring is one judge call per question: the judge sees the rubric's gate and components and returns a structured verdict for that answer alone. Nothing about it depends on any other model's answer, which is what makes the scores comparable across every model and site.
 
@@ -114,7 +139,7 @@ The judge returns JSON, not a number: the gate decision, per-component `awarded`
 
 **Sampling differs by path**, and one setting lives outside this repository. The judge is always called with `temperature 0, top_p 1`; `--mode api` sends the same. But in **opencode mode** (which includes every OpenRouter candidate) `main.py` sets nothing: it shells out, and opencode samples per its own config. A model that does not support a parameter never receives it, so some reasoning-model answers are not temperature-controlled and repeat runs will vary. And because the setting is opencode's, a different machine can produce different answers with no trace.
 
-## Calibration fixtures
+### Calibration fixtures
 
 Every rubric question ships ~4 **calibration fixtures**: a fabricated candidate answer paired with the score its author *predicted* the marking block would produce (a gate-fail near miss, a bare gate pass, a partial-credit boundary, a full answer). They pin down how the gate and each component behave at their boundaries and are the reference point when an ambiguous marking block needs revising. The harness does not execute them automatically; feeding each back through `main.py --score` is one of the two non-optional manual passes after a build (see [`AUTHORING.md`](AUTHORING.md#after-the-build)).
 
@@ -151,7 +176,7 @@ main.py            single-file eval driver (generate + score)
 prompts.py         judge prompt templates
 start_eval.sh      interactive wrapper: pod lifecycle + eval + export
 configs/           models.json (model/LoRA registry), rubrics.json (rubric registry)
-rubrics/           question sets + grading keys (see Rubrics above)
+rubrics/           question sets + grading keys (see Benchmark data above)
 corpus/            source documents for the sample rubric (Yudnamutana only; other corpora on Hugging Face)
 scripts/           convert_jsonl.py, export_sheets.py
 AUTHORING.md       building a rubric for a new corpus (RUNPOD.md covers vLLM/RunPod setup)
@@ -195,7 +220,7 @@ Code and prompts: [MIT](LICENSE). The `corpus/yudnamutana/` sample is **CC BY 4.
 
 The Eigenform name and logo, and the brand assets under `docs/` (`favicon.png`, `favicon-32x32.png`, `apple-touch-icon.png`, `og.png`), are trademarks of Eigenform and are not covered by the MIT license.
 
-## Citing
+## Citation
 
 If you use Groundtruth or its rubrics, please cite it. See [`CITATION.cff`](CITATION.cff); GitHub's "Cite this repository" produces BibTeX and APA.
 
