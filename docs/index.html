@@ -89,7 +89,7 @@
   body { background: var(--bg); color: var(--fg); margin: 0; padding: 2.5rem 1.5rem 4rem; }
   main { max-width: 1080px; margin: 0 auto; }
   h1 { font-size: 1.7rem; margin: 0 0 0.3rem; }
-  p.lede { color: var(--muted); max-width: 68ch; line-height: 1.5; }
+  p.lede { color: var(--muted); line-height: 1.6; }
   a { color: var(--link); }
   .links { margin: 1.2rem 0 1.5rem; display: flex; gap: 1.2rem; flex-wrap: wrap; font-size: 0.92rem; }
   .controls { display: flex; align-items: center; gap: 1.4rem; margin: 1rem 0 1rem; font-size: 0.9rem; flex-wrap: wrap; }
@@ -110,6 +110,7 @@
     margin: 0 0 1rem; font-size: 0.87rem; line-height: 1.5;
   }
   .status { color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem; }
+  #table-container { overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
   thead th {
     text-align: left; padding: 0.6rem 0.7rem; border-bottom: 2px solid var(--border);
@@ -131,7 +132,15 @@
     padding: 0.5rem 0.7rem; font-size: 0.8rem; margin-top: 0.3rem;
   }
   .empty, .error { color: var(--muted); padding: 2rem 0; }
-  footer { margin-top: 3rem; color: var(--muted); font-size: 0.82rem; line-height: 1.6; }
+  .notes { margin-top: 3rem; color: var(--muted); font-size: 0.82rem; line-height: 1.6; }
+  footer {
+    max-width: 1080px; margin: 2.5rem auto 0; padding-top: 1.25rem;
+    border-top: 1px solid var(--border); color: var(--muted); font-size: 0.82rem;
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;
+  }
+  footer a { color: var(--fg); text-decoration: none; font-weight: 500; }
+  footer a:hover { color: var(--link); text-decoration: underline; }
+  .footer-links { display: flex; gap: 1.25rem; align-items: center; }
   code { background: var(--accent-bg); color: var(--accent); padding: 0.1rem 0.35rem; border-radius: 4px; font-size: 0.85em; }
 </style>
 </head>
@@ -139,6 +148,9 @@
 <main>
   <h1>Groundtruth Dynamic Benchmarking — Leaderboard</h1>
   <p class="lede">
+    Groundtruth is a domain-specific LLM benchmark for geological reasoning, evaluating how well AI models reason over real geoscience source material (mineral exploration reports, government geological archives, and technical filings) rather than textbook recall. Candidate models answer fixed district question sets, and an independent LLM judge grades every answer 0–10 against a calibrated, source-anchored rubric.
+  </p>
+  <p class="lede" style="margin-top: 0.6rem;">
     Self-reported pointwise rubric scores (0–10 per question) against the
     <a href="https://huggingface.co/datasets/EigenformAI/groundtruth-dynamic-benchmarking">groundtruth-dynamic-benchmarking</a>
     geology rubrics, read live from public datasets. Nothing is hardcoded on this page.
@@ -168,7 +180,7 @@
   <div id="status" class="status">Loading…</div>
   <div id="table-container"></div>
 
-  <footer>
+  <section class="notes" aria-label="Scoring and methodology notes">
     <p>
       <strong>Results are self-reported, not independently re-run.</strong>
       Each row is exactly what a submitter's own scoring run produced;
@@ -187,8 +199,14 @@
       calling that exact model are shown, ranked by harness rather than by
       model — see the submissions dataset README for how to enter.
     </p>
-  </footer>
+  </section>
 </main>
+<footer>
+  <span>© Eigenform · Groundtruth Dynamic Benchmarking</span>
+  <div class="footer-links">
+    <a href="https://www.eigenform.ai/">eigenform.ai ↗</a>
+  </div>
+</footer>
 
 <script>
 const DATASET_API = "https://huggingface.co/api/datasets";
