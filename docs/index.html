@@ -263,6 +263,13 @@ async function loadRubricQuestionIds(questionsFile) {
   return ids;
 }
 
+async function loadRubrics(registry) {
+  const idSets = await Promise.all(registry.map(r => loadRubricQuestionIds(r.questions_file)));
+  const rubricsByKey = {};
+  registry.forEach((r, i) => { rubricsByKey[r.key] = { label: r.label || r.key, ids: idSets[i] }; });
+  return rubricsByKey;
+}
+
 const SUBMISSION_TRACKS = new Set(["model-benchmark", "harness-benchmark"]);
 
 async function listSubmissionSlugs() {
@@ -286,10 +293,10 @@ function isNoHarness(name) {
   return !name || /^none\b/i.test(name.trim());
 }
 
-async function loadSubmission(slug, rubricsByKey) {
+async function loadSubmission(slug, rubricsReady) {
   const base = `${DATASET_RESOLVE}/${SUBMISSIONS_REPO}/resolve/main/submissions/${slug}`;
-  const meta = await fetchJson(`${base}/meta.json`);
-  const scores = await fetchJson(`${base}/scores.json`);
+  const [meta, scores] = await Promise.all([fetchJson(`${base}/meta.json`), fetchJson(`${base}/scores.json`)]);
+  const rubricsByKey = await rubricsReady;
 
   const rubricKey = meta.rubric_key;
   const warnings = [];
@@ -437,15 +444,18 @@ viewToggleEl.addEventListener("click", (e) => {
 
 async function main() {
   try {
-    setStatus("Loading rubric registry…");
-    const [registry, harnessTrack] = await Promise.all([loadRubricRegistry(), loadHarnessTrack()]);
+    setStatus("Loading rubric registry and submission list…");
+    const [registry, harnessTrack, slugs] = await Promise.all([loadRubricRegistry(), loadHarnessTrack(), listSubmissionSlugs()]);
     HARNESS_TRACK = harnessTrack;
 
-    setStatus(`Loading ${registry.length} rubric question set(s)…`);
-    const rubricsByKey = {};
+    setStatus(`Loading ${registry.length} rubric question set(s) and ${slugs.length} submission(s)…`);
+    const rubricsReady = loadRubrics(registry);
+    const rowsReady = Promise.all(slugs.map(slug =>
+      loadSubmission(slug, rubricsReady).catch(e =>
+        ({ slug, meta: { model_name: slug }, warnings: [`Failed to load: ${e.message}`], skip: true }))));
+
+    await rubricsReady;
     for (const r of registry) {
-      const ids = await loadRubricQuestionIds(r.questions_file);
-      rubricsByKey[r.key] = { label: r.label || r.key, ids };
       const opt = document.createElement("option");
       opt.value = r.key;
       opt.textContent = r.label || r.key;
@@ -453,18 +463,7 @@ async function main() {
     }
     filterEl.addEventListener("change", applyFilter);
 
-    setStatus("Listing submissions…");
-    const slugs = await listSubmissionSlugs();
-
-    setStatus(`Loading ${slugs.length} submission(s)…`);
-    const rows = [];
-    for (const slug of slugs) {
-      try {
-        rows.push(await loadSubmission(slug, rubricsByKey));
-      } catch (e) {
-        rows.push({ slug, meta: { model_name: slug }, warnings: [`Failed to load: ${e.message}`], skip: true });
-      }
-    }
+    const rows = await rowsReady;
 
     ALL_ROWS = rows;
     setStatus(`${rows.length} submission(s) across ${registry.length} rubric(s) · updated ${new Date().toISOString().slice(0, 16).replace("T", " ")} UTC`);
